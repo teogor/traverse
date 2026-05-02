@@ -19,10 +19,15 @@
 .agent/
 ├── MEMORY.md        ← this file — read first, update after every task
 ├── ARCHITECTURE.md  ← all design decisions — update when decisions change
-└── ROADMAP.md       ← milestones and per-item checklist — tick off as you go
+├── ROADMAP.md       ← milestones and per-item checklist — tick off as you go
+└── refs/
+    ├── nav3.md                  ← androidx.navigation3 full API reference + gotchas
+    └── compose-destinations.md  ← compose-destinations feature inventory; what to replicate/drop/improve
 ```
 
-These three files are the agent's source of truth. Root-level `README.md` and `CONTRIBUTING.md` are for human readers and stay in sync with decisions recorded here.
+**When to read refs:**
+- `refs/nav3.md` — BEFORE writing any code in `traverse-compose`. Contains the exact API, known limitations, and code examples.
+- `refs/compose-destinations.md` — when implementing a new feature; check what compose-destinations did and what the Traverse verdict is.
 
 ---
 
@@ -227,11 +232,14 @@ public data class TraverseTransitionSpec(
 
 ## Open Research Questions (resolve before implementing affected areas)
 
-1. **nav3 exact artifact coordinates** — Confirm the Maven coordinates for `androidx.navigation3` when you start. The library is evolving quickly. Check https://developer.android.com/jetpack/androidx/releases/navigation3 before writing build files.
-2. **nav3 nested back-stack API** — Confirm how nested navigation works in the stable nav3 API before implementing `nested()`.
-3. **nav3 `bottomSheet`** — Check if `androidx.navigation3` has a `bottomSheet` destination type. If not, document it as a future addition (the way it was done in Armature).
-4. **`SavedStateHandle` on iOS/Desktop** — nav3 may or may not expose `SavedStateHandle` on non-Android platforms. Design `TraverseResultStore` accordingly. Use `MutableSharedFlow` as fallback.
-5. **nav3 `NavOptions`** — Confirm the equivalent of nav2's `NavOptionsBuilder` in nav3 (single-top, restore state flags).
+> Full context for each question is in `.agent/refs/nav3.md` (marked with ⚠️ VERIFY).
+
+1. **nav3 exact artifact coordinates** — Confirm the Maven coordinates + version before writing build files. See `.agent/refs/nav3.md` → "Maven Coordinates". Check https://developer.android.com/jetpack/androidx/releases/navigation3.
+2. **nav3 nested back-stack API** — Two approaches exist (nested `NavDisplay` vs flat back stack). See `.agent/refs/nav3.md` → "Nested Navigation". Confirm which nav3 recommends before implementing `nested()`.
+3. **nav3 `bottomSheet`** — nav3 likely does NOT have a `bottomSheet` entry type. See `.agent/refs/nav3.md` → "Known Limitations". If absent, wrap `ModalBottomSheet` manually.
+4. **nav3 `dialog` entry** — Confirm if nav3 has a `dialog` entry type or if it must be wrapped manually.
+5. **`SavedStateHandle` on iOS/Desktop** — Not available. Use `TraverseResultStore` backed by `MutableSharedFlow`. See `.agent/refs/compose-destinations.md` → "Navigation results" for the consumer/producer pattern.
+6. **nav3 `NavOptions` equivalent** — nav2 had `NavOptionsBuilder` for `launchSingleTop`, `popUpTo`, `restoreState`. Confirm nav3's equivalent API.
 
 ---
 
