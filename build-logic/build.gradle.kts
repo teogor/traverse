@@ -16,6 +16,10 @@ gradlePlugin {
             id = "traverse.kmp.application"
             implementationClass = "TraverseKmpApplicationPlugin"
         }
+        register("traverseJvmLibrary") {
+            id = "traverse.jvm.library"
+            implementationClass = "TraverseJvmLibraryPlugin"
+        }
     }
 }
 

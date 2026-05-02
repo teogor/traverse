@@ -62,7 +62,7 @@ fun App(
         TraverseHost(
             startDestination = Splash,
             navigator = navigator,
-            transitions = TraverseTransitionSpec.horizontalSlide(),
+            transitions = TraverseTransitionSpec.none(),
         ) {
             screen<Splash> {
                 val nav = LocalTraverseNavigator.current

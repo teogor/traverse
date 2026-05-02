@@ -1,5 +1,6 @@
 [versions]
 android-gradle-plugin = "8.11.2"
+ksp = "2.3.7"
 android-sdk-compile = "36"
 android-sdk-min = "24"
 android-sdk-target = "36"
@@ -46,6 +47,10 @@ android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref
 jetbrains-kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "jetbrains-kotlin" }
 jetbrains-kotlin-compose-gradle-plugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "jetbrains-kotlin" }
 jetbrains-compose-gradle-plugin = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "jetbrains-compose" }
+# KSP — symbol processing API used by traverse-ksp-processor module
+ksp-symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+# KSP Gradle plugin JAR — used only in build-logic/build.gradle.kts
+ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
@@ -55,3 +60,4 @@ jetbrains-compose-hot-reload = { id = "org.jetbrains.compose.hot-reload", versio
 jetbrains-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "jetbrains-kotlin" }
 jetbrains-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "jetbrains-kotlin" }
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "jetbrains-kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
