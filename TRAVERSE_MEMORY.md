@@ -1,0 +1,255 @@
+# Traverse — Agent Working Memory
+
+> **YOU ARE THE AGENT FOR THIS PROJECT.**
+>
+> ⚠️ READ THIS FILE COMPLETELY AT THE START OF EVERY SESSION.
+>
+> 🔁 **UPDATE THIS FILE after every task you complete** — add a progress log entry, update TODO status.
+>
+> 💾 **COMMIT AT THE END OF EVERY SESSION** using:
+> ```bash
+> git add -A && git commit -m "<conventional commit message summarizing what you did>"
+> ```
+>
+> Branch: `main` (commit directly to main until the project reaches beta)
+
+---
+
+## What is Traverse?
+
+**Traverse** is a **Kotlin Multiplatform navigation library** for Compose Multiplatform.
+
+It is the spiritual successor to [compose-destinations](https://github.com/raamcosta/compose-destinations), which is no longer maintained. Traverse is built on top of **`androidx.navigation3`** — Google's new experimental navigation API (announced I/O 2025) — and is designed to work on **Android, iOS, and Desktop (JVM)**.
+
+**WasmJs is explicitly out of scope until nav3 supports it.**
+
+**Key differentiators vs compose-destinations:**
+- No annotation processing / KSP — zero codegen
+- KMP-first (Android + iOS + Desktop)
+- Built on nav3 (not the deprecated nav2)
+- Type-safe via `@Serializable` Kotlin data classes — no code generation needed
+
+**Author:** Teodor Grigor (`dev.teogor`)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Language | Kotlin 2.x |
+| UI | Compose Multiplatform (JetBrains) |
+| Navigation base | `androidx.navigation3` (experimental, 1.x alpha) |
+| Serialization | `kotlinx.serialization` |
+| Build | Gradle with `libs.versions.toml` version catalog |
+| KMP Targets | `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm` |
+
+**Important:** `androidx.navigation3` is a COMPLETELY DIFFERENT library from `navigation-compose 2.x`. Do NOT mix them up. nav3 uses `NavDisplay` + `NavBackStack`. nav2 uses `NavHost` + `NavController`.
+
+---
+
+## Module Structure
+
+```
+traverse/
+├── traverse-core/          ← KMP, NO Compose dependency
+│   └── Destination.kt      ← public interface Destination
+│   └── TraverseNavigator.kt ← interface + extensions
+│   └── result/             ← setResultAndNavigateUp, CollectTraverseResultOnce
+│   └── dsl/TraverseDsl.kt  ← @DslMarker annotation
+│
+├── traverse-compose/       ← KMP, depends on traverse-core + Compose + nav3
+│   └── TraverseHost.kt     ← @Composable entry point
+│   └── TraverseGraphBuilder.kt ← DSL wrapper over nav3 entryProvider
+│   └── DefaultTraverseNavigator.kt ← nav3 NavBackStack adapter
+│   └── LocalTraverseNavigator.kt   ← CompositionLocal<TraverseNavigator>
+│   └── TraverseTransitionSpec.kt   ← fade/horizontalSlide/none presets
+│
+├── traverse-test/          ← KMP, testImplementation only
+│   └── FakeTraverseNavigator.kt
+│   └── TraverseAssertions.kt
+│
+├── demo/
+│   └── composeApp/         ← Runnable Compose MP app, depends on traverse-compose
+│
+├── build-logic/            ← Convention Gradle plugins
+└── gradle/
+    └── libs.versions.toml  ← All versions in one place
+```
+
+**Strict dependency rule:**
+- `traverse-core` → nothing (no project dependencies)
+- `traverse-compose` → `traverse-core`
+- `traverse-test` → `traverse-core`
+- `demo` → `traverse-compose`
+
+---
+
+## Core API Contract (do not change without updating ARCHITECTURE.md)
+
+### Destination
+
+```kotlin
+// traverse-core
+public interface Destination
+// All concrete destinations must also be @Serializable:
+@Serializable data object Home : Destination
+@Serializable data class UserProfile(val userId: String) : Destination
+```
+
+### TraverseNavigator
+
+```kotlin
+public interface TraverseNavigator {
+    public val backStack: NavBackStack<Destination>
+    public fun navigate(destination: Destination, builder: NavOptions.() -> Unit = {})
+    public fun navigateUp(): Boolean
+    public fun popTo(destination: Destination, inclusive: Boolean = false): Boolean
+    public val canNavigateUp: Boolean
+}
+// Extension functions (top-level, NOT interface methods):
+public inline fun <reified T : Destination> TraverseNavigator.navigateAndClearUpTo(destination: T)
+public inline fun <reified Root : Destination> TraverseNavigator.launchAsNewRoot(destination: Destination)
+```
+
+### TraverseHost
+
+```kotlin
+@Composable
+public fun TraverseHost(
+    startDestination: Destination,
+    modifier: Modifier = Modifier,
+    navigator: TraverseNavigator? = null,   // optional — pass for testing
+    transitions: TraverseTransitionSpec? = null,
+    builder: TraverseGraphBuilder.() -> Unit,
+)
+```
+
+### TraverseGraphBuilder
+
+```kotlin
+@TraverseDsl
+public class TraverseGraphBuilder {
+    public inline fun <reified T : Destination> screen(
+        enterTransition: ...? = null,
+        exitTransition: ...? = null,
+        content: @Composable (entry: NavEntry<T>, dest: T) -> Unit,
+    )
+    public inline fun <reified T : Destination> dialog(
+        properties: DialogProperties = DialogProperties(),
+        content: @Composable (entry: NavEntry<T>, dest: T) -> Unit,
+    )
+    public inline fun <reified T : Destination> bottomSheet(  // pending nav3 API
+        content: @Composable (entry: NavEntry<T>, dest: T) -> Unit,
+    )
+    public fun nested(
+        startDestination: Destination,
+        graphKey: Destination? = null,
+        builder: TraverseGraphBuilder.() -> Unit,
+    )
+}
+```
+
+### Navigation Results
+
+```kotlin
+// Producer
+public fun <T> TraverseNavigator.setResultAndNavigateUp(key: String, value: T)
+public fun <T> TraverseNavigator.setResultAndPopTo(key: String, value: T, destination: Destination, inclusive: Boolean = false)
+
+// Consumer
+@Composable
+public fun <T> CollectTraverseResultOnce(key: String, onResult: (T) -> Unit)
+```
+
+### Transitions
+
+```kotlin
+public data class TraverseTransitionSpec(
+    val enterTransition: (AnimatedContentTransitionScope<*>.() -> EnterTransition?)? = null,
+    val exitTransition: (AnimatedContentTransitionScope<*>.() -> ExitTransition?)? = null,
+    val popEnterTransition: (AnimatedContentTransitionScope<*>.() -> EnterTransition?)? = null,
+    val popExitTransition: (AnimatedContentTransitionScope<*>.() -> ExitTransition?)? = null,
+) {
+    public companion object {
+        public fun fade(durationMillis: Int = 300): TraverseTransitionSpec
+        public fun horizontalSlide(durationMillis: Int = 300): TraverseTransitionSpec
+        public fun none(): TraverseTransitionSpec
+    }
+}
+```
+
+---
+
+## Conventions (always follow these)
+
+1. **`explicitApi()` is enabled in all library modules** — every public declaration needs `public` modifier.
+2. **`@TraverseDsl`** (`@DslMarker`) must be on `TraverseGraphBuilder` and any nested builder class.
+3. **`internal`** for all implementation classes — `DefaultTraverseNavigator`, element classes, render functions.
+4. **`inline fun <reified T : Destination>`** for all graph-builder registration functions.
+5. **Naming prefix** — all public API is prefixed `Traverse` except `Destination` and CompositionLocals (`LocalTraverseNavigator`).
+6. **Commits** — use [Conventional Commits](https://www.conventionalcommits.org/): `feat(core):`, `fix(compose):`, `chore(deps):`, etc.
+7. **One concern per file** — `TraverseNavigator.kt` only, `TraverseGraphBuilder.kt` only, etc.
+8. **KDoc** on every public declaration in library modules.
+9. **`traverse-core` has NO Compose dependency** — if something requires `@Composable`, it goes in `traverse-compose`.
+
+---
+
+## Current State
+
+| Item | Status |
+|---|---|
+| Git repo initialized | ✅ |
+| `.gitignore` | ✅ |
+| `README.md` | ✅ |
+| `ARCHITECTURE.md` | ✅ |
+| `ROADMAP.md` | ✅ |
+| `CONTRIBUTING.md` | ✅ |
+| `TRAVERSE_MEMORY.md` | ✅ (this file) |
+| Gradle skeleton (settings, build, libs.versions.toml) | ❌ TODO |
+| `traverse-core` first source files | ❌ TODO |
+| `traverse-compose` first source files | ❌ TODO |
+| `traverse-test` skeleton | ❌ TODO |
+| Demo app skeleton | ❌ TODO |
+
+**Next task for the next agent:** Start Milestone 1 — Gradle skeleton. See ROADMAP.md for the checklist.
+
+---
+
+## Open Research Questions (resolve before implementing affected areas)
+
+1. **nav3 exact artifact coordinates** — Confirm the Maven coordinates for `androidx.navigation3` when you start. The library is evolving quickly. Check https://developer.android.com/jetpack/androidx/releases/navigation3 before writing build files.
+2. **nav3 nested back-stack API** — Confirm how nested navigation works in the stable nav3 API before implementing `nested()`.
+3. **nav3 `bottomSheet`** — Check if `androidx.navigation3` has a `bottomSheet` destination type. If not, document it as a future addition (the way it was done in Armature).
+4. **`SavedStateHandle` on iOS/Desktop** — nav3 may or may not expose `SavedStateHandle` on non-Android platforms. Design `TraverseResultStore` accordingly. Use `MutableSharedFlow` as fallback.
+5. **nav3 `NavOptions`** — Confirm the equivalent of nav2's `NavOptionsBuilder` in nav3 (single-top, restore state flags).
+
+---
+
+## Reference: What Armature Did (for inspiration, do not copy-paste)
+
+Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from. It used **nav2 (`navigation-compose` 2.9.1)** with a custom DSL wrapper. Key files for reference:
+
+| Armature file | Traverse equivalent to create |
+|---|---|
+| `ArmatureNavigator.kt` | `TraverseNavigator.kt` |
+| `ArmatureNavHost.kt` | `TraverseHost.kt` |
+| `ArmatureGraphBuilder.kt` | `TraverseGraphBuilder.kt` |
+| `ArmatureTransitionSpec.kt` | `TraverseTransitionSpec.kt` |
+| `LocalArmatureNavigator.kt` | `LocalTraverseNavigator.kt` |
+| `NavigationResult.kt` | `NavigationResult.kt` (in traverse-core) |
+
+**Key differences Traverse must fix vs Armature:**
+- Armature used `DefaultArmatureNavigator(controller: NavHostController)` — nav2 API. Traverse wraps `NavBackStack` instead.
+- Armature's nested graph used `KClass<out Route>` overload. Traverse should use `reified` inline functions everywhere.
+- Armature's result store was Android-only (`savedStateHandle`). Traverse needs a KMP-compatible result store.
+
+---
+
+## Progress Log
+
+### 2026-05-02 — Session 1 (by previous agent from armature project)
+- Created the git repo at `/Users/teodor.grigor/Teogor/traverse`.
+- Created all documentation and memory files: `.gitignore`, `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `CONTRIBUTING.md`, `TRAVERSE_MEMORY.md`.
+- Made initial commit: `chore: initial scaffold — docs and memory file`.
+

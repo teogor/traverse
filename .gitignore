@@ -1,0 +1,43 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!src/**/build/
+local.properties
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+
+# Kotlin
+*.class
+*.kotlin_module
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode / iOS
+xcuserdata/
+*.xcworkspace/
+*.xcodeproj/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+.build/
+
+# Compose Multiplatform
+*.compose.cache
+
+# Node / Wasm (future)
+node_modules/
+.kotlin/
+
+# CocoaPods
+Podfile.lock
+
