@@ -229,6 +229,7 @@ public data class TraverseTransitionSpec(
 7. **One concern per file** — `TraverseNavigator.kt` only, `TraverseGraphBuilder.kt` only, etc.
 8. **KDoc** on every public declaration in library modules.
 9. **`traverse-core` has NO Compose dependency** — if something requires `@Composable`, it goes in `traverse-compose`.
+10. **🔁 DEMO SYNC RULE — MANDATORY:** Every time a public API is added or changed in the library (`traverse-core` or `traverse-compose`), the corresponding piece must be reflected in `demo/composeApp` **in the same commit**. The demo is a real, naturally flowing app (a Journal app — see Demo App Design below), NOT a feature checklist. Add/update the relevant screen, destination, or wiring in the demo. If the Compose layer isn't available yet (e.g. during M2), create the destination types + skeleton screen files so they're ready to wire in M3.
 
 ---
 
@@ -275,6 +276,68 @@ public data class TraverseTransitionSpec(
 
 ---
 
+## Demo App Design — "Journal" (dev.teogor.traverse.demo)
+
+The demo is a **personal journal app**. It is a real, shippable-looking app — not a feature checklist.
+Every Traverse feature is exercised through a natural user flow.
+
+### Navigation structure
+
+```
+Onboarding graph (nested)
+  ├── OnboardingWelcomeScreen     data object OnboardingWelcome
+  ├── OnboardingFeaturesScreen    data object OnboardingFeatures
+  └── OnboardingReadyScreen       data object OnboardingReady   → navigate to Home (launchAsNewRoot)
+
+Main app
+  ├── HomeScreen                  data object Home               → list of journal entries
+  │     ├── navigate → EntryDetailScreen(entryId)
+  │     ├── navigate → NewEntryScreen                            (returns entry title via result)
+  │     └── navigate → Settings
+  ├── EntryDetailScreen           data class EntryDetail(entryId: String)
+  │     ├── navigate → ConfirmDeleteDialog(entryId)              (dialog — result: deleted Boolean)
+  │     └── navigate → TagPickerSheet                            (bottomSheet — result: tag String)
+  ├── NewEntryScreen              data object NewEntry            → setResultAndNavigateUp("new_entry_title", title)
+  ├── SettingsScreen              data object Settings
+  ├── ConfirmDeleteDialog         data class ConfirmDelete(entryId: String)   [dialog destination]
+  └── TagPickerSheet              data object TagPicker                        [bottomSheet destination]
+```
+
+### What each screen demonstrates
+
+| Screen | Traverse feature demonstrated |
+|---|---|
+| Onboarding* → Ready → Home | `nested()`, `launchAsNewRoot` |
+| Home | `navigate()`, `canNavigateUp`, bottom nav base |
+| EntryDetail(entryId) | Typed args via `data class` destination |
+| NewEntry | `setResultAndNavigateUp` (producer), `CollectTraverseResultOnce` on Home (consumer) |
+| Settings | `popTo`, `navigateAndClearUpTo` |
+| ConfirmDeleteDialog | `dialog<T>`, result passing, `navigateUp` |
+| TagPickerSheet | `bottomSheet<T>`, result passing |
+
+### File layout in demo/composeApp/src/commonMain
+
+```
+kotlin/dev/teogor/traverse/demo/
+├── App.kt                           ← TraverseHost setup (wired in M3)
+├── Destinations.kt                  ← All @Serializable destination types
+├── screen/
+│   ├── HomeScreen.kt
+│   ├── EntryDetailScreen.kt
+│   ├── NewEntryScreen.kt
+│   └── SettingsScreen.kt
+├── onboarding/
+│   ├── OnboardingWelcomeScreen.kt
+│   ├── OnboardingFeaturesScreen.kt
+│   └── OnboardingReadyScreen.kt
+├── dialog/
+│   └── ConfirmDeleteDialog.kt
+└── sheet/
+    └── TagPickerSheet.kt
+```
+
+---
+
 ## Reference: What Armature Did (for inspiration, do not copy-paste)
 
 Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from. It used **nav2 (`navigation-compose` 2.9.1)** with a custom DSL wrapper. Key files for reference:
@@ -297,7 +360,26 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 8 (current)
+### 2026-05-02 — Session 9 (current)
+- **Added DEMO SYNC RULE** to Conventions (rule #10): every public API change must be mirrored in the demo in the same commit.
+- **Added Demo App Design section** to MEMORY.md — "Journal" app, full screen/destination/file layout documented.
+- **Demo app built (M2 correspondence):**
+  - `Destinations.kt` — all `@Serializable` destination types: `Onboarding`, `OnboardingWelcome`, `OnboardingFeatures`, `OnboardingReady`, `Home`, `EntryDetail(entryId)`, `NewEntry`, `Settings`, `ConfirmDelete(entryId)`, `TagPicker`
+  - `onboarding/OnboardingWelcomeScreen.kt` — step 1, "Get started" button
+  - `onboarding/OnboardingFeaturesScreen.kt` — step 2, feature cards
+  - `onboarding/OnboardingReadyScreen.kt` — step 3, "Start journaling" → `launchAsNewRoot`
+  - `screen/HomeScreen.kt` — entry list, FAB, Settings button, `RESULT_NEW_ENTRY_TITLE` constant
+  - `screen/EntryDetailScreen.kt` — typed `entryId` arg, Delete button, Add tag button, result constants
+  - `screen/NewEntryScreen.kt` — form, Save → `setResultAndNavigateUp`
+  - `screen/SettingsScreen.kt` — toggles, `popTo(Home)` button
+  - `dialog/ConfirmDeleteDialog.kt` — `AlertDialog` for `dialog<ConfirmDelete>`
+  - `sheet/TagPickerSheet.kt` — `ModalBottomSheet` for `bottomSheet<TagPicker>`
+  - `App.kt` — replaced default demo; full `TraverseHost` wiring shown as TODO comment for M3; placeholder `Text` so it compiles now
+  - `Greeting.kt` — removed (dead code from JetBrains template)
+  - `demo/composeApp/build.gradle.kts` — added `project(":traverse-core")` dependency
+- Build: `BUILD SUCCESSFUL` ✅, 15 traverse-core tests passing ✅
+
+### 2026-05-02 — Session 8
 - **Architecture decision — Option A:** `Destination` does NOT extend `NavKey`. `traverse-core` is fully framework-free. Updated `.agent/ARCHITECTURE.md` Section 2.
 - **Pre-work:**
   - Added `traverse.version=1.0.0-alpha01` to `gradle.properties`.
