@@ -11,118 +11,206 @@ import dev.teogor.traverse.compose.navigator.LocalTraverseNavigator
 import dev.teogor.traverse.compose.result.CollectTraverseResultOnce
 import dev.teogor.traverse.compose.transition.TraverseTransitionSpec
 import dev.teogor.traverse.core.navigator.launchAsNewRoot
-import dev.teogor.traverse.demo.dialog.ConfirmDeleteDialog
-import dev.teogor.traverse.demo.onboarding.OnboardingFeaturesScreen
-import dev.teogor.traverse.demo.onboarding.OnboardingReadyScreen
-import dev.teogor.traverse.demo.onboarding.OnboardingWelcomeScreen
-import dev.teogor.traverse.demo.screen.EntryDetailScreen
-import dev.teogor.traverse.demo.screen.HomeScreen
-import dev.teogor.traverse.demo.screen.NewEntryScreen
-import dev.teogor.traverse.demo.screen.RESULT_DELETE_CONFIRMED
-import dev.teogor.traverse.demo.screen.RESULT_NEW_ENTRY_TITLE
-import dev.teogor.traverse.demo.screen.RESULT_SELECTED_TAG
-import dev.teogor.traverse.demo.screen.SettingsScreen
-import dev.teogor.traverse.demo.sheet.TagPickerSheet
+import dev.teogor.traverse.demo.dialog.ShowcaseDialogContent
+import dev.teogor.traverse.demo.feature.ColorPickerScreen
+import dev.teogor.traverse.demo.feature.DialogDemoScreen
+import dev.teogor.traverse.demo.feature.NestedStepScreen
+import dev.teogor.traverse.demo.feature.ResultDemoScreen
+import dev.teogor.traverse.demo.feature.SheetDemoScreen
+import dev.teogor.traverse.demo.feature.SingleTopScreen
+import dev.teogor.traverse.demo.feature.StackControlScreen
+import dev.teogor.traverse.demo.feature.StackLevelScreen
+import dev.teogor.traverse.demo.feature.TypedArgsScreen
+import dev.teogor.traverse.demo.screen.CatalogScreen
+import dev.teogor.traverse.demo.screen.SplashScreen
+import dev.teogor.traverse.demo.sheet.OptionSheetContent
 
 @Composable
 fun App() {
     MaterialTheme {
         TraverseHost(
-            startDestination = Onboarding,
+            startDestination = Splash,
             transitions = TraverseTransitionSpec.horizontalSlide(),
         ) {
-            nested(startDestination = OnboardingWelcome, graphKey = Onboarding) {
-                screen<OnboardingWelcome> {
-                    val nav = LocalTraverseNavigator.current
-                    OnboardingWelcomeScreen(onNext = { nav.navigate(OnboardingFeatures) })
-                }
-                screen<OnboardingFeatures> {
-                    val nav = LocalTraverseNavigator.current
-                    OnboardingFeaturesScreen(
-                        onNext = { nav.navigate(OnboardingReady) },
-                        onBack = { nav.navigateUp() },
-                    )
-                }
-                screen<OnboardingReady> {
-                    val nav = LocalTraverseNavigator.current
-                    OnboardingReadyScreen(
-                        onGetStarted = { nav.launchAsNewRoot<Onboarding>(Home) },
-                        onBack = { nav.navigateUp() },
-                    )
-                }
+
+            // ── Splash ────────────────────────────────────────────────────────
+            screen<Splash> {
+                val nav = LocalTraverseNavigator.current
+                SplashScreen(onEnter = { nav.launchAsNewRoot<Splash>(Catalog) })
             }
 
-            screen<Home> {
+            // ── Catalog ───────────────────────────────────────────────────────
+            screen<Catalog> {
                 val nav = LocalTraverseNavigator.current
-                var newTitle by remember { mutableStateOf<String?>(null) }
-                CollectTraverseResultOnce<String>(RESULT_NEW_ENTRY_TITLE) { newTitle = it }
-                HomeScreen(
-                    onOpenEntry = { id -> nav.navigate(EntryDetail(id)) },
-                    onNewEntry = { nav.navigate(NewEntry) },
-                    onSettings = { nav.navigate(Settings) },
-                    newEntryTitle = newTitle,
+                CatalogScreen(
+                    onNestedGraph = { nav.navigate(NestedFlowGraph) },
+                    onTypedArgs = { nav.navigate(FeatureDetail("kmp")) },
+                    onResults = { nav.navigate(ResultDemo) },
+                    onDialog = { nav.navigate(DialogDemo) },
+                    onSheet = { nav.navigate(SheetDemo) },
+                    onStackControl = { nav.navigate(StackControl) },
+                    onSingleTop = { nav.navigate(SingleTopDemo) },
                 )
             }
 
-            screen<EntryDetail> { dest ->
+            // ── Feature: nested() graph ───────────────────────────────────────
+            nested(startDestination = NestedStep1, graphKey = NestedFlowGraph) {
+                screen<NestedStep1> {
+                    val nav = LocalTraverseNavigator.current
+                    NestedStepScreen(
+                        step = 1,
+                        totalSteps = 3,
+                        description = "You navigated to NestedFlowGraph. Traverse automatically " +
+                            "redirected to NestedStep1 (the graph's startDestination).",
+                        onNext = { nav.navigate(NestedStep2) },
+                    )
+                }
+                screen<NestedStep2> {
+                    val nav = LocalTraverseNavigator.current
+                    NestedStepScreen(
+                        step = 2,
+                        totalSteps = 3,
+                        description = "All nested destinations share the same flat entry registry. " +
+                            "The graph key is simply a routing alias — no separate NavGraph objects.",
+                        onNext = { nav.navigate(NestedStep3) },
+                        onBack = { nav.navigateUp() },
+                    )
+                }
+                screen<NestedStep3> {
+                    val nav = LocalTraverseNavigator.current
+                    NestedStepScreen(
+                        step = 3,
+                        totalSteps = 3,
+                        description = "Call popTo(Catalog) to exit the entire nested flow in one step, " +
+                            "clearing all intermediate destinations.",
+                        onNext = { nav.popTo(Catalog) },
+                        onBack = { nav.navigateUp() },
+                        nextLabel = "Done — Return to Catalog",
+                    )
+                }
+            }
+
+            // ── Feature: Typed Arguments ──────────────────────────────────────
+            screen<FeatureDetail> { dest ->
                 val nav = LocalTraverseNavigator.current
-                var tag by remember { mutableStateOf<String?>(null) }
-                CollectTraverseResultOnce<String>(RESULT_SELECTED_TAG) { tag = it }
-                CollectTraverseResultOnce<Boolean>(RESULT_DELETE_CONFIRMED) { if (it) nav.navigateUp() }
-                EntryDetailScreen(
-                    entryId = dest.entryId,
-                    onBack = { nav.navigateUp() },
-                    onDeleteRequest = { nav.navigate(ConfirmDelete(dest.entryId)) },
-                    onPickTag = { nav.navigate(TagPicker) },
-                    currentTag = tag,
+                TypedArgsScreen(
+                    featureId = dest.featureId,
+                    onNavigateWithDifferentId = { id -> nav.navigate(FeatureDetail(id)) },
                 )
             }
 
-            screen<NewEntry> {
+            // ── Feature: Navigation Results ───────────────────────────────────
+            screen<ResultDemo> {
                 val nav = LocalTraverseNavigator.current
-                NewEntryScreen(
-                    onSave = { title ->
-                        nav.setResult(RESULT_NEW_ENTRY_TITLE, title)
+                var pickedColor by remember { mutableStateOf<String?>(null) }
+                CollectTraverseResultOnce<String>(RESULT_COLOR) { pickedColor = it }
+                ResultDemoScreen(
+                    pickedColor = pickedColor,
+                    onPickColor = { nav.navigate(ColorPicker) },
+                )
+            }
+            screen<ColorPicker> {
+                val nav = LocalTraverseNavigator.current
+                ColorPickerScreen(
+                    onColorPicked = { color ->
+                        nav.setResult(RESULT_COLOR, color)
                         nav.navigateUp()
                     },
-                    onCancel = { nav.navigateUp() },
                 )
             }
 
-            screen<Settings> {
+            // ── Feature: dialog<T> ────────────────────────────────────────────
+            screen<DialogDemo> {
                 val nav = LocalTraverseNavigator.current
-                SettingsScreen(
-                    onBack = { nav.navigateUp() },
-                    onGoHome = { nav.popTo(Home, inclusive = false) },
+                var lastResult by remember { mutableStateOf<Boolean?>(null) }
+                CollectTraverseResultOnce<Boolean>(RESULT_DIALOG_CONFIRMED) { lastResult = it }
+                DialogDemoScreen(
+                    lastResult = lastResult,
+                    onOpenDialog = { nav.navigate(ShowcaseDialog("Ready to confirm?")) },
                 )
             }
-
-            dialog<ConfirmDelete> { dest ->
+            dialog<ShowcaseDialog> { dest ->
                 val nav = LocalTraverseNavigator.current
-                ConfirmDeleteDialog(
-                    entryId = dest.entryId,
+                ShowcaseDialogContent(
+                    message = dest.message,
                     onConfirm = {
-                        nav.setResult(RESULT_DELETE_CONFIRMED, true)
+                        nav.setResult(RESULT_DIALOG_CONFIRMED, true)
                         nav.navigateUp()
                     },
                     onDismiss = {
-                        nav.setResult(RESULT_DELETE_CONFIRMED, false)
+                        nav.setResult(RESULT_DIALOG_CONFIRMED, false)
                         nav.navigateUp()
                     },
                 )
             }
 
-            bottomSheet<TagPicker> {
+            // ── Feature: bottomSheet<T> ───────────────────────────────────────
+            screen<SheetDemo> {
                 val nav = LocalTraverseNavigator.current
-                TagPickerSheet(
-                    onTagSelected = { selectedTag ->
-                        nav.setResult(RESULT_SELECTED_TAG, selectedTag)
+                var pickedOption by remember { mutableStateOf<String?>(null) }
+                CollectTraverseResultOnce<String>(RESULT_OPTION) { pickedOption = it }
+                SheetDemoScreen(
+                    pickedOption = pickedOption,
+                    onOpenSheet = { nav.navigate(OptionSheet) },
+                )
+            }
+            bottomSheet<OptionSheet> {
+                val nav = LocalTraverseNavigator.current
+                OptionSheetContent(
+                    onOptionSelected = { option ->
+                        nav.setResult(RESULT_OPTION, option)
                         nav.navigateUp()
                     },
                     onDismiss = { nav.navigateUp() },
                 )
             }
+
+            // ── Feature: Stack Control ────────────────────────────────────────
+            screen<StackControl> {
+                val nav = LocalTraverseNavigator.current
+                StackControlScreen(
+                    onNavigateToA = { nav.navigate(StackLevelA) },
+                )
+            }
+            screen<StackLevelA> {
+                val nav = LocalTraverseNavigator.current
+                StackLevelScreen(
+                    level = "A",
+                    onGoDeeper = { nav.navigate(StackLevelB) },
+                    onPopToStackControl = { nav.popTo(StackControl) },
+                    onPopToCatalog = { nav.popTo(Catalog) },
+                )
+            }
+            screen<StackLevelB> {
+                val nav = LocalTraverseNavigator.current
+                StackLevelScreen(
+                    level = "B",
+                    onGoDeeper = { nav.navigate(StackLevelC) },
+                    onPopToStackControl = { nav.popTo(StackControl) },
+                    onPopToCatalog = { nav.popTo(Catalog) },
+                )
+            }
+            screen<StackLevelC> {
+                val nav = LocalTraverseNavigator.current
+                StackLevelScreen(
+                    level = "C",
+                    onGoDeeper = null,
+                    onPopToStackControl = { nav.popTo(StackControl) },
+                    onPopToCatalog = { nav.popTo(Catalog) },
+                )
+            }
+
+            // ── Feature: launchSingleTop ──────────────────────────────────────
+            screen<SingleTopDemo> {
+                val nav = LocalTraverseNavigator.current
+                SingleTopScreen(
+                    stackSize = nav.backStack.size,
+                    onNavigateNormal = { nav.navigate(SingleTopDemo) },
+                    onNavigateSingleTop = {
+                        nav.navigate(SingleTopDemo) { launchSingleTop = true }
+                    },
+                )
+            }
         }
     }
 }
-

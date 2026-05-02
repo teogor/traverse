@@ -364,7 +364,14 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 12 (current)
+### 2026-05-02 — Session 13 (current)
+- **Reworked demo app — "Traverse Explorer" (replaces "Journal" demo):**
+  - Concept: self-documenting navigation showcase. Every screen has a live **BackStackBar** at the bottom showing the back stack as breadcrumb chips — reactive to every push/pop.
+  - Deleted all Journal app files. Created: `Destinations.kt`, `DemoConstants.kt`, `ui/BackStackBar.kt`, `ui/ShowcaseScaffold.kt`, `screen/SplashScreen.kt`, `screen/CatalogScreen.kt`, `feature/NestedStepScreen.kt`, `feature/TypedArgsScreen.kt`, `feature/ResultDemoScreen.kt`, `feature/ColorPickerScreen.kt`, `feature/DialogDemoScreen.kt`, `feature/SheetDemoScreen.kt`, `feature/StackControlScreen.kt`, `feature/SingleTopScreen.kt`, `dialog/ShowcaseDialogContent.kt`, `sheet/OptionSheetContent.kt`.
+  - 7 feature demos wired in App.kt: nested(), typed args, results, dialog<T>, bottomSheet<T>, popTo/stack control, launchSingleTop.
+  - **BUILD SUCCESSFUL** ✅. **DEMO RUNS** ✅.
+
+### 2026-05-02 — Session 12
 - **Fixed runtime crash: `SerializationException: Serializer for class 'OnboardingWelcome' is not found`**
   - Root cause: `screen<T>()`, `dialog<T>()`, `bottomSheet<T>()` called `serializer<T>()` inside `EntrySpec(...)`. When the Compose compiler extracts `@Composable` content lambdas from within the builder lambda into `ComposableSingletons`, the `serializer<T>()` call inside the extracted body fails at runtime on desktop JVM (reflective lookup) even though `T` is `@Serializable`. The serializer field was completely unused at runtime (reserved for saved-state milestone).
   - Fix: made `EntrySpec.serializer` nullable with default `null`. Removed `serializer = serializer<T>()` from all three `EntrySpec(...)` constructor calls. Removed unused `import kotlinx.serialization.serializer` from `TraverseGraphBuilder.kt`.

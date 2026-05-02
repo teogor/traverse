@@ -3,61 +3,59 @@ package dev.teogor.traverse.demo
 import dev.teogor.traverse.core.Destination
 import kotlinx.serialization.Serializable
 
-// ── Onboarding graph ─────────────────────────────────────────────────────────
+// ── Splash ────────────────────────────────────────────────────────────────────
 
-/** Key for the onboarding nested graph. Navigate here to start onboarding. */
-@Serializable data object Onboarding : Destination
+/** Full-screen app entry point. Uses `launchAsNewRoot` to transition to [Catalog]. */
+@Serializable data object Splash : Destination
 
-/** First onboarding screen — welcome message and app introduction. */
-@Serializable data object OnboardingWelcome : Destination
+// ── Catalog (persistent root) ─────────────────────────────────────────────────
 
-/** Second onboarding screen — highlights Traverse's key features. */
-@Serializable data object OnboardingFeatures : Destination
+/** Feature catalog — the app's root after splash. Lists all Traverse features. */
+@Serializable data object Catalog : Destination
 
-/** Third onboarding screen — "Get started" action clears the stack and launches the main app. */
-@Serializable data object OnboardingReady : Destination
+// ── Feature: nested() graph ───────────────────────────────────────────────────
 
-// ── Main app ─────────────────────────────────────────────────────────────────
+/** Graph key destination — navigating here redirects to [NestedStep1]. */
+@Serializable data object NestedFlowGraph : Destination
 
-/** Home screen — shows all journal entries. The app's root after onboarding. */
-@Serializable data object Home : Destination
+@Serializable data object NestedStep1 : Destination
+@Serializable data object NestedStep2 : Destination
 
-/**
- * Entry detail screen — displays the full content of a single journal entry.
- *
- * Demonstrates typed navigation arguments: [entryId] is carried directly
- * on the destination without any extra argument holder.
- */
-@Serializable data class EntryDetail(val entryId: String) : Destination
+/** Step 3 of 3 — uses `popTo(Catalog)` to exit the nested flow. */
+@Serializable data object NestedStep3 : Destination
+
+// ── Feature: Typed Arguments ──────────────────────────────────────────────────
 
 /**
- * New entry screen — a form for creating a journal entry.
- *
- * Demonstrates navigation results: when the user saves, this screen calls
- * `navigator.setResultAndNavigateUp("new_entry_title", title)` and the
- * Home screen collects it via `CollectTraverseResultOnce`.
+ * Strongly-typed destination carrying a runtime argument.
+ * Demonstrates `data class` destinations — no route strings needed.
  */
-@Serializable data object NewEntry : Destination
+@Serializable data class FeatureDetail(val featureId: String) : Destination
 
-/** Settings screen — app preferences. */
-@Serializable data object Settings : Destination
+// ── Feature: Navigation Results ───────────────────────────────────────────────
 
-// ── Overlay destinations ──────────────────────────────────────────────────────
+@Serializable data object ResultDemo : Destination
+@Serializable data object ColorPicker : Destination
 
-/**
- * Confirm-delete dialog — asks the user to confirm deleting a journal entry.
- *
- * Demonstrates `dialog<T>` destinations: renders inside an `AlertDialog`
- * without a full back-stack push. Returns a Boolean result via
- * `setResultAndNavigateUp("delete_confirmed", true/false)`.
- */
-@Serializable data class ConfirmDelete(val entryId: String) : Destination
+// ── Feature: dialog<T> ────────────────────────────────────────────────────────
 
-/**
- * Tag picker bottom sheet — lets the user pick a tag for a journal entry.
- *
- * Demonstrates `bottomSheet<T>` destinations: renders inside a `ModalBottomSheet`.
- * Returns the selected tag string via `setResultAndNavigateUp("selected_tag", tag)`.
- */
-@Serializable data object TagPicker : Destination
+@Serializable data object DialogDemo : Destination
 
+/** Dialog destination — rendered as a composable `Dialog` overlay. */
+@Serializable data class ShowcaseDialog(val message: String) : Destination
+
+// ── Feature: bottomSheet<T> ───────────────────────────────────────────────────
+
+@Serializable data object SheetDemo : Destination
+@Serializable data object OptionSheet : Destination
+
+// ── Feature: popTo / Stack Control ────────────────────────────────────────────
+
+@Serializable data object StackControl : Destination
+@Serializable data object StackLevelA : Destination
+@Serializable data object StackLevelB : Destination
+@Serializable data object StackLevelC : Destination
+
+// ── Feature: launchSingleTop ──────────────────────────────────────────────────
+
+@Serializable data object SingleTopDemo : Destination
