@@ -58,21 +58,23 @@ SavedStateConfiguration — serializer config required for non-JVM platforms
 
 ## 2. Destination contract
 
-**Decision:** `Destination` is `interface Destination : NavKey`. Concrete destinations are `@Serializable` data classes or data objects.
+**Decision:** `Destination` is a **plain Kotlin marker interface with zero framework dependencies**. It does NOT extend `NavKey`. Concrete destinations are `@Serializable` data classes or data objects.
 
 ```kotlin
-// traverse-core
-public interface Destination : NavKey
+// traverse-core — no nav3 import, no Compose import
+public interface Destination
 
 // Callers write:
 @Serializable data object Home : Destination
 @Serializable data class UserProfile(val userId: String) : Destination
 ```
 
-**Why `interface Destination : NavKey` and not just `NavKey` directly?**
-- `NavKey` is nav3's internal marker — callers should code against Traverse's type, not nav3's.
-- Extending `NavKey` means `Destination` is directly usable in nav3's `NavDisplay`, `rememberNavBackStack`, and `entryProvider` without casting.
-- Keeping Traverse's own name (`Destination`) means if nav3 renames or restructures `NavKey`, Traverse callers are unaffected — only `traverse-compose` changes.
+**Option A was chosen (2026-05-02):** `Destination` does NOT extend `NavKey`.
+
+**Rationale:**
+- `traverse-core` must have zero Compose and zero nav3 dependency — it is the module depended on by both `traverse-compose` AND `traverse-test`. Extending `NavKey` would pull `navigation3-ui` (and transitively, Compose Runtime) into `traverse-core`, contaminating `traverse-test`.
+- `traverse-compose`'s `DefaultTraverseNavigator` maps `Destination` → `NavKey` internally via a cast. Since every `Destination` is registered by the `TraverseGraphBuilder` (which controls what enters the back stack), the cast is safe and sealed inside `traverse-compose`.
+- If nav3 renames or removes `NavKey`, only `traverse-compose` internals change — callers and `traverse-core` are unaffected.
 
 **Why require `@Serializable`?**
 - nav3's `rememberNavBackStack` needs explicit serializers for non-JVM platforms (iOS, Web). See `.agent/refs/navigation-reference.md` → "SavedStateConfiguration".

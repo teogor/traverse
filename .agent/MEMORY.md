@@ -248,11 +248,14 @@ public data class TraverseTransitionSpec(
 | `traverse-core` module skeleton (build.gradle.kts + Destination.kt) | ✅ |
 | `traverse-compose` module skeleton (build.gradle.kts) | ✅ |
 | `build-logic` convention plugins (Kotlin `Plugin<Project>` classes) | ✅ |
-| `traverse-core` first source files (Navigator, results, DSL) | ❌ TODO |
+| `traverse.version=1.0.0-alpha01` in `gradle.properties` | ✅ |
+| `LICENSE` file (Apache 2.0) | ✅ |
+| `traverse-core` M2 source files (Navigator, NavOptions, extensions, result helpers, DSL marker) | ✅ |
+| `traverse-core` unit tests (15 passing — extensions + NavOptions) | ✅ |
 | `traverse-compose` first source files (TraverseHost, etc.) | ❌ TODO |
 | `traverse-test` skeleton | ❌ TODO |
 
-**Next task for the next agent:** Milestone 2 — implement `traverse-core` source files. See ROADMAP.md.
+**Next task for the next agent:** Milestone 3 — implement `traverse-compose` source files. See ROADMAP.md and `docs/PLAN.md` §11 M3.
 
 ---
 
@@ -294,7 +297,27 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 7 (current)
+### 2026-05-02 — Session 8 (current)
+- **Architecture decision — Option A:** `Destination` does NOT extend `NavKey`. `traverse-core` is fully framework-free. Updated `.agent/ARCHITECTURE.md` Section 2.
+- **Pre-work:**
+  - Added `traverse.version=1.0.0-alpha01` to `gradle.properties`.
+  - Added `jetbrains-kotlinx-coroutines-core` library to `gradle/libs.versions.toml`.
+  - Updated `traverse-core/build.gradle.kts` — added `kotlinx-coroutines-core` dependency.
+  - Created `LICENSE` (Apache 2.0).
+- **M2 — `traverse-core` source files (all new/updated):**
+  - `Destination.kt` — finalized KDoc, plain marker interface
+  - `dsl/TraverseDsl.kt` — `@DslMarker annotation class TraverseDsl`
+  - `navigator/NavOptions.kt` — data class with `launchSingleTop`, `popUpTo`, `popUpToInclusive`, `restoreState`
+  - `navigator/TraverseNavigator.kt` — interface: `backStack`, `currentDestination`, `canNavigateUp`, `navigate`, `navigateUp`, `popTo`, `setResult`, `clearResult`, `observeResult`
+  - `navigator/TraverseNavigatorExtensions.kt` — `navigateAndClearUpTo`, `launchAsNewRoot`, `isOnBackStack`, `entriesOf`
+  - `result/NavigationResultExtensions.kt` — `setResultAndNavigateUp`, `setResultAndPopTo`
+- **M2 — Unit tests (15 passing on JVM):**
+  - `commonTest/navigator/TraverseNavigatorExtensionsTest.kt` — 12 tests covering all extensions + `canNavigateUp` + `currentDestination`
+  - `commonTest/navigator/NavOptionsTest.kt` — 3 tests covering defaults, copy, builder lambda
+- **KSP future milestone noted** — will be Milestone 9: `traverse-ksp-processor` + `traverse-ksp-annotations` (optional, post-1.0, strictly additive).
+- Committed: `feat(core): M2 — traverse-core source files + unit tests`
+
+### 2026-05-02 — Session 7
 - Created `docs/PLAN.md` — exhaustive library plan covering:
   - Executive summary, problem statement, design philosophy, competitive landscape
   - Complete feature inventory (sections 5.1–5.13) with milestone tags
