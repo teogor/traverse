@@ -260,7 +260,7 @@ public data class TraverseTransitionSpec(
 
 **Current architecture:** `DefaultTraverseNavigator` uses `SnapshotStateList<Destination>`. `TraverseHost` uses `AnimatedContent` for screen transitions. Dialogs/bottom sheets rendered as overlays. nav3 is NOT a dependency.
 
-**Next task for the next agent:** Milestone 7 — Publication setup (Maven Central, GitHub Actions CI, binary compatibility validator). M6 (Deep Links) is deferred — it is a post-launch feature.
+**Next task for the next agent:** Milestone 6 — Deep Links, or proceed to Milestone 7 (Publication) when ready.
 
 ---
 
@@ -363,6 +363,26 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 ---
 
 ## Progress Log
+
+### 2026-05-02 — Session 17 (current)
+- **Implemented all outstanding pre-publication features:**
+  1. **Per-screen transition overrides** — `screen<T>()` in `TraverseGraphBuilder` now accepts
+     `enterTransition`, `exitTransition`, `popEnterTransition`, `popExitTransition` lambdas.
+     `EntrySpec` holds the four nullable fields. `TraverseAnimatedHostCore` checks the target/initial
+     entry spec before falling back to the host-level `TraverseTransitionSpec`, then to `fadeIn/fadeOut`.
+  2. **Desktop Escape / Alt+Left back navigation** — added `expect/actual` `Modifier.traverseBackKeyModifier`
+     extension in `backgesture/TraverseKeyModifier.kt` across all 6 platforms. Desktop (jvmMain) uses
+     `Modifier.onPreviewKeyEvent` to intercept `Escape` and `Alt+Left` before any child composable.
+     Other platforms return `this` (no-op). Applied on the root `Box` in `TraverseAnimatedHostCore`.
+  3. **`rememberTraverseNavigator(startDestination)`** — new public composable in
+     `navigator/rememberTraverseNavigator.kt`. Returns a `DefaultTraverseNavigator` as `TraverseNavigator`.
+     `DefaultTraverseNavigator.nestedGraphKeys` changed to `var`; `snapshotBackStack` property added.
+     `TraverseHost` detects `DefaultTraverseNavigator` instances and routes them through the full animated
+     path (same as the default path), wiring `nestedGraphKeys` from the graph builder automatically.
+  4. **ROADMAP.md M1 `traverse-test` checkbox** — fixed stale unchecked item (M4 completed it).
+- **Build:** `BUILD SUCCESSFUL` across all 6 targets: Android, iOS, JVM, JS, wasmJs ✅
+- **Tests:** 44 passing (15 traverse-core + 29 traverse-test) ✅
+- **Updated docs:** `docs/FEATURES.md`, `.agent/ROADMAP.md` reflect new shipped status.
 
 ### 2026-05-02 — Session 16 (current)
 - **Full audit: zero issues remaining.**

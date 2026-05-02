@@ -59,11 +59,11 @@
 | Bottom Sheet | `bottomSheet<T> { content }` | `ModalBottomSheet {}` overlay |
 | Nested graph key | `nested(startDest, graphKey = T)` | Routing alias, no visual |
 
-### 📋 Planned
+### ✅ Shipped
 
-| Feature | Description | Milestone |
+| Feature | API | Notes |
 |---|---|---|
-| Per-screen transition overrides | `screen<T>(enterTransition = { slideIn() })` — override global spec for one destination | M6 |
+| Per-screen transition overrides | `screen<T>(enterTransition = { slideIn() }, exitTransition = { … })` | Overrides host-level `TraverseTransitionSpec` for one destination; falls back to global if null |
 
 ### 💡 Ideas
 
@@ -104,12 +104,13 @@ TraverseHost(startDestination = Home) {
 
 ### ✅ Shipped
 
-| Preset | Code |
-|---|---|
-| Fade | `TraverseTransitionSpec.fade(durationMillis = 300)` |
-| Horizontal slide | `TraverseTransitionSpec.horizontalSlide(durationMillis = 300)` |
-| None (instant cut) | `TraverseTransitionSpec.none()` |
-| Custom | Provide `enterTransition`, `exitTransition`, `popEnterTransition`, `popExitTransition` lambdas |
+| Feature | API | Notes |
+|---|---|---|
+| Fade | `TraverseTransitionSpec.fade(durationMillis = 300)` | |
+| Horizontal slide | `TraverseTransitionSpec.horizontalSlide(durationMillis = 300)` | |
+| None (instant cut) | `TraverseTransitionSpec.none()` | |
+| Custom | Provide `enterTransition`, `exitTransition`, `popEnterTransition`, `popExitTransition` lambdas | |
+| Per-destination override | `screen<T>(enterTransition = { … }, exitTransition = { … }, …)` | Overrides host-level spec for one screen; all 4 directions supported |
 
 All transitions are direction-aware: push shows enter/exit, back shows popEnter/popExit automatically.
 
@@ -117,7 +118,6 @@ All transitions are direction-aware: push shows enter/exit, back shows popEnter/
 
 | Feature | Description | Milestone |
 |---|---|---|
-| Per-destination override | `screen<T>(enterTransition = { … })` | M6 |
 | Predictive back (Android 14+) | `PredictiveBackHandler` gesture interpolation | Post-M5 |
 
 ### 💡 Ideas
@@ -209,7 +209,7 @@ All backed by `MutableSharedFlow(replay = 1)` — works identically on all 6 pla
 |---|---|
 | Android | ✅ `BackHandler` from `androidx.activity.compose` |
 | iOS | ✅ no-op (Compose Multiplatform handles swipe-back via UIKit) |
-| Desktop (JVM) | ✅ no-op stub (back key events not yet wired) |
+| Desktop (JVM) | ✅ `Escape` / `Alt+Left` via `Modifier.onPreviewKeyEvent` on root Box |
 | Browser (JS) | ✅ no-op stub |
 | Browser (Wasm) | ✅ no-op stub |
 
@@ -218,7 +218,6 @@ All backed by `MutableSharedFlow(replay = 1)` — works identically on all 6 pla
 | Platform | Feature | Notes |
 |---|---|---|
 | Android | Predictive back animation (Android 14+) | `PredictiveBackHandler` with progress interpolation |
-| Desktop | `Escape` / `Alt+Left` shortcut | KMP keyboard event handling |
 | Browser (JS/Wasm) | Browser history API | `history.pushState` + `popstate` event listener |
 
 ---
@@ -247,30 +246,37 @@ All backed by `MutableSharedFlow(replay = 1)` — works identically on all 6 pla
 
 ## 10. Multiple Back Stacks (Tab Navigation)
 
-### 💡 Ideas / Future Feature
+### ✅ Shipped
 
 ```kotlin
-// Pattern: one navigator per tab
-val homeNav = rememberTraverseNavigator(Home)
+// Create one navigator per tab — each owns its own back stack.
+val homeNav   = rememberTraverseNavigator(Home)
 val searchNav = rememberTraverseNavigator(Search)
 val profileNav = rememberTraverseNavigator(Profile)
 
 NavigationBar {
     NavigationBarItem(…, onClick = { selectedTab = Tab.Home })
     NavigationBarItem(…, onClick = { selectedTab = Tab.Search })
+    NavigationBarItem(…, onClick = { selectedTab = Tab.Profile })
 }
 
 when (selectedTab) {
-    Tab.Home   -> TraverseHost(navigator = homeNav)   { … }
-    Tab.Search -> TraverseHost(navigator = searchNav) { … }
+    Tab.Home    -> TraverseHost(startDestination = Home,    navigator = homeNav)    { … }
+    Tab.Search  -> TraverseHost(startDestination = Search,  navigator = searchNav)  { … }
+    Tab.Profile -> TraverseHost(startDestination = Profile, navigator = profileNav) { … }
 }
 ```
 
-Tab state (each tab's back stack) would be preserved when switching — currently impossible because `TraverseHost` creates its own `DefaultTraverseNavigator` internally. Requires exposing `rememberTraverseNavigator()` as a public factory.
+`rememberTraverseNavigator(startDestination)` returns a `TraverseNavigator` backed by a
+`SnapshotStateList`. When passed to `TraverseHost` via the `navigator` parameter, the full
+animated navigation engine is used and nested-graph resolution is wired automatically.
+Tab state (each tab's independent back stack) is preserved across tab switches.
+
+### 💡 Ideas
+
+- **Saved-state per tab** — persist each tab's back stack across process death / config changes
 
 ---
-
-## 11. Saved State / Process Death
 
 ### 💡 Ideas / Future Feature
 
@@ -362,16 +368,23 @@ The current approach (zero codegen) is the primary path. KSP is an opt-in overla
 | Area | ✅ Done | 📋 Next | 💡 Ideas |
 |---|---|---|---|
 | Core Navigation | Forward, back, popTo, singleTop, launchAsNewRoot | — | Replace, history cursor |
-| Destination Types | screen, dialog, bottomSheet, nested | Per-screen transitions | fullScreenDialog, sideSheet, popover, guard |
-| Transitions | fade, slide, none, custom | Predictive back, per-destination | verticalSlide, scale, shared element |
+| Destination Types | screen, dialog, bottomSheet, nested | **Per-screen transitions ✅** | fullScreenDialog, sideSheet, popover, guard |
+| Transitions | fade, slide, none, custom, **per-destination ✅** | Predictive back | verticalSlide, scale, shared element |
 | Results | setResult, setResultAndNavigateUp, CollectOnce | — | Typed keys, awaitResult, timeout |
 | Testing | FakeNavigator + 8 assertion helpers | ComposeTestRule | Lambda assertions, state machine tests |
-| Back Gesture | Android ✅, others stub | Desktop Escape, Browser history | — |
+| Back Gesture | Android ✅, Desktop ✅ (Escape / Alt+Left), others stub | Predictive back (Android 14+), Browser history |
 | Deep Links | — | Full M6 feature | Type-safe builder, deferred deep links |
-| Tab Navigation | — | rememberTraverseNavigator | tab state preservation |
+| Tab Navigation | `rememberTraverseNavigator` ✅ | — | Saved-state per tab |
 | Saved State | EntrySpec.serializer reserved | Back stack persistence | Platform storage adapters |
 | Analytics | — | — | Interceptor, Firebase plugin |
 | ViewModel | — | — | Per-entry VM scoping |
 | Publication | — | M7: Maven Central + CI + Dokka | BOM, Gradle plugin |
 | KSP (opt-in) | — | — | @TraverseDestination, route gen |
+
+
+
+
+
+
+
 

@@ -11,15 +11,31 @@ import kotlin.reflect.KClass
 /**
  * Production implementation of [TraverseNavigator] backed by a [SnapshotStateList].
  *
- * Created internally by [TraverseHost]. Callers should never instantiate this directly.
+ * Created internally by [TraverseHost] or exposed via [rememberTraverseNavigator].
+ * Callers should never instantiate this class directly; use [rememberTraverseNavigator]
+ * when you need to hold a navigator reference outside the host (e.g. for tab navigation).
+ *
  * nav3 types are not used here — Traverse is self-contained.
  */
 internal class DefaultTraverseNavigator(
     private val _backStack: SnapshotStateList<Destination>,
-    private val nestedGraphKeys: Map<KClass<out Destination>, Destination>,
+    /**
+     * Maps graph-key destination classes to their nested graph's start destination.
+     * Populated by [TraverseHost] from the [TraverseGraphBuilder]. When a
+     * [DefaultTraverseNavigator] is created via [rememberTraverseNavigator], this starts
+     * as an empty map and is then updated by [TraverseHost] before the first composition.
+     */
+    internal var nestedGraphKeys: Map<KClass<out Destination>, Destination>,
 ) : TraverseNavigator {
 
     private val resultStore = TraverseResultStore()
+
+    /**
+     * The underlying [SnapshotStateList] so [TraverseHost] can attach it to the
+     * [AnimatedContent] engine when an external navigator is provided.
+     */
+    internal val snapshotBackStack: SnapshotStateList<Destination>
+        get() = _backStack
 
     // ── Back stack ────────────────────────────────────────────────────────────
 

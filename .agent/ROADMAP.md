@@ -28,7 +28,7 @@
 - [x] `build.gradle.kts` (root) — convention plugins applied
 - [x] `traverse-core/build.gradle.kts` — KMP, no Compose dep, targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `wasmJs`
 - [x] `traverse-compose/build.gradle.kts` — KMP, Compose, nav3, same targets
-- [ ] `traverse-test/build.gradle.kts` — KMP, test scope only
+- [x] `traverse-test/build.gradle.kts` — KMP, test scope only
 - [x] `demo/composeApp/build.gradle.kts` — application, depends on traverse-compose
 - [x] `build-logic/` — convention plugins (`TraverseKmpLibraryPlugin`, `TraverseComposePlugin`, `TraverseKmpApplicationPlugin`)
 - [x] All modules compile: `./gradlew :traverse-core:compileKotlinJvm` ✅

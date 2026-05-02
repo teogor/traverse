@@ -252,16 +252,37 @@ CollectTraverseResultOnce<String>(RESULT_COLOR) { color -> … }
 
 **Decision:** `AnimatedContent` drives screen transitions. `TraverseTransitionSpec` is a value class wrapping four optional transition lambdas.
 
+Per-destination overrides are supported via `screen<T>(enterTransition = …, …)` in `TraverseGraphBuilder`. These are stored in `EntrySpec` and take priority in `TraverseAnimatedHostCore`.
+
 ```kotlin
 AnimatedContent(
     targetState = currentScreen,
     transitionSpec = {
         val isPop = !backStack.contains(initialState)
-        if (isPop) popEnter togetherWith popExit
-        else enter togetherWith exit
+        val targetSpec = graphBuilder.findSpec(targetState)
+        val initialSpec = graphBuilder.findSpec(initialState)
+        if (isPop) {
+            val enter = targetSpec?.popEnterTransition?.invoke()
+                ?: initialSpec?.popEnterTransition?.invoke()
+                ?: transitions?.popEnterTransition?.invoke()
+                ?: fadeIn()
+            val exit = initialSpec?.popExitTransition?.invoke()
+                ?: targetSpec?.popExitTransition?.invoke()
+                ?: transitions?.popExitTransition?.invoke()
+                ?: fadeOut()
+            enter togetherWith exit
+        } else {
+            val enter = targetSpec?.enterTransition?.invoke()
+                ?: transitions?.enterTransition?.invoke() ?: fadeIn()
+            val exit = initialSpec?.exitTransition?.invoke()
+                ?: transitions?.exitTransition?.invoke() ?: fadeOut()
+            enter togetherWith exit
+        }
     },
 ) { dest -> graphBuilder.findSpec(dest)?.content?.invoke(dest) }
 ```
+
+**Priority order:** per-entry spec → host `TraverseTransitionSpec` → `fadeIn`/`fadeOut` fallback.
 
 **Pop vs push direction detection:** `initialState ∉ backStack` after the transition starts means the outgoing screen was popped — the reverse animation should play.
 
@@ -282,13 +303,22 @@ AnimatedContent(
 | Android | `androidTarget` | `BackHandler` from `androidx.activity.compose` |
 | iOS (device) | `iosArm64` | no-op `actual` (CMP handles swipe-back via UIKit layer) |
 | iOS (simulator) | `iosSimulatorArm64` | no-op `actual` |
-| Desktop (JVM) | `jvm` | `BackHandler` stub — keyboard shortcuts planned |
+| Desktop (JVM) | `jvm` | `Modifier.onPreviewKeyEvent` on root Box — `Escape` + `Alt+Left` |
 | Browser (JS) | `js + browser()` | no-op `actual` — browser history API planned |
 | Browser (Wasm) | `wasmJs + browser()` | no-op `actual` — browser history API planned |
 
-All 6 targets compile. `expect fun TraverseBackHandler(enabled, onBack)` has platform actuals:
-- `androidMain` — delegates to `androidx.activity.compose.BackHandler`
-- `iosMain`, `jvmMain`, `jsMain`, `wasmJsMain` — no-op stubs (functional parity planned)
+All 6 targets compile. Back-gesture is handled via two independent mechanisms:
+
+1. **`expect fun TraverseBackHandler(enabled, onBack)`** — standalone composable.
+   - `androidMain` — delegates to `androidx.activity.compose.BackHandler`
+   - all other platforms — no-op stubs
+2. **`internal expect fun Modifier.traverseBackKeyModifier(enabled, onBack)`** — modifier extension
+   applied on the root `Box` in `TraverseAnimatedHostCore`.
+   - `jvmMain` — `Modifier.onPreviewKeyEvent` intercepts `Escape` / `Alt+Left` before any child
+   - all other platforms — returns `this` (no-op)
+
+The two mechanisms are complementary: `TraverseBackHandler` covers system back on Android;
+`traverseBackKeyModifier` covers keyboard shortcuts on Desktop.
 
 ---
 
@@ -300,5 +330,5 @@ All 6 targets compile. `expect fun TraverseBackHandler(enabled, onBack)` has pla
 - ✅ nav3 nested back stacks — not used; flat registry + `nestedGraphKeys` map
 - ✅ `@TraverseDsl` DslMarker scope — confirmed working; prevents `screen<>` inside `screen<>`
 - ⏳ Deep link schema — deferred to M6
-- ⏳ Desktop/Web back-gesture handling — no-op stubs in place; full impl deferred
+- ✅ Desktop/Web back-gesture handling — Desktop Escape/Alt+Left implemented via `traverseBackKeyModifier`; browser history deferred
 - ⏳ Saved-state / process-death restoration — deferred; `EntrySpec.serializer` field reserved

@@ -1,5 +1,7 @@
 package dev.teogor.traverse.compose.graph
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import dev.teogor.traverse.compose.internal.EntrySpec
 import dev.teogor.traverse.compose.internal.EntryType
@@ -16,6 +18,10 @@ import dev.teogor.traverse.core.dsl.TraverseDsl
  * TraverseHost(startDestination = Home) {
  *     screen<Home> { HomeScreen() }
  *     screen<UserProfile> { dest -> UserProfileScreen(dest.userId) }
+ *     screen<Settings>(
+ *         enterTransition = { fadeIn() },
+ *         exitTransition  = { fadeOut() },
+ *     ) { SettingsScreen() }
  *     dialog<ConfirmDelete> { dest -> ConfirmDeleteDialog(dest.entryId, ...) }
  *     bottomSheet<TagPicker> { TagPickerSheet(...) }
  *     nested(startDestination = OnboardingWelcome, graphKey = Onboarding) {
@@ -35,9 +41,18 @@ public class TraverseGraphBuilder internal constructor() {
     /**
      * Register a full-screen destination of type [T].
      *
-     * @param content Composable content. Receives the strongly-typed destination instance.
+     * @param enterTransition    Enter animation when this destination is pushed onto the stack.
+     *   Overrides the host-level [TraverseTransitionSpec]. Pass `null` to inherit from host.
+     * @param exitTransition     Exit animation when this destination is replaced (another pushes in).
+     * @param popEnterTransition Enter animation when returning to this destination via back navigation.
+     * @param popExitTransition  Exit animation when this destination is popped off the stack.
+     * @param content            Composable content. Receives the strongly-typed destination instance.
      */
     public inline fun <reified T : Destination> screen(
+        noinline enterTransition: (() -> EnterTransition)? = null,
+        noinline exitTransition: (() -> ExitTransition)? = null,
+        noinline popEnterTransition: (() -> EnterTransition)? = null,
+        noinline popExitTransition: (() -> ExitTransition)? = null,
         noinline content: @Composable (dest: T) -> Unit,
     ) {
         @Suppress("UNCHECKED_CAST")
@@ -45,6 +60,10 @@ public class TraverseGraphBuilder internal constructor() {
             klass = T::class,
             type = EntryType.SCREEN,
             content = { dest -> content(dest as T) },
+            enterTransition = enterTransition,
+            exitTransition = exitTransition,
+            popEnterTransition = popEnterTransition,
+            popExitTransition = popExitTransition,
         )
     }
 
@@ -56,8 +75,10 @@ public class TraverseGraphBuilder internal constructor() {
      * The content is rendered inside a Compose [Dialog] window, overlaid on top
      * of the current back-stack rendering. Dismiss by calling `navigator.navigateUp()`.
      *
-     * @param properties [DialogProperties] controlling dialog window behaviour.
-     * @param content    Composable content inside the dialog.
+     * Dialogs do not participate in [AnimatedContent] transitions and therefore ignore
+     * the transition override parameters.
+     *
+     * @param content Composable content inside the dialog.
      */
     public inline fun <reified T : Destination> dialog(
         noinline content: @Composable (dest: T) -> Unit,
@@ -77,6 +98,9 @@ public class TraverseGraphBuilder internal constructor() {
      *
      * The content is rendered inside a [ModalBottomSheet]. Dismiss (swipe down or
      * tap scrim) automatically calls `navigator.navigateUp()`.
+     *
+     * Bottom sheets do not participate in [AnimatedContent] transitions and therefore
+     * ignore the transition override parameters.
      *
      * @param content Composable content inside the bottom sheet.
      */
