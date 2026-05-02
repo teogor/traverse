@@ -40,6 +40,10 @@
 └── refs/
     ├── navigation-reference.md  ← full nav ecosystem reference: nav2, nav3-KMP, nav3-Android, migration, links
     └── compose-destinations.md  ← compose-destinations feature inventory; what to replicate/drop/improve
+
+docs/
+└── PLAN.md          ← THE exhaustive library plan: all features, all classes, all milestones, all risks
+                       READ THIS before starting any milestone. It supersedes the inline notes in ROADMAP.md.
 ```
 
 **When to read refs:**
@@ -290,7 +294,23 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 6 (current)
+### 2026-05-02 — Session 7 (current)
+- Created `docs/PLAN.md` — exhaustive library plan covering:
+  - Executive summary, problem statement, design philosophy, competitive landscape
+  - Complete feature inventory (sections 5.1–5.13) with milestone tags
+  - Full module architecture with file-level breakdown
+  - All public API signatures with KDoc (Sections 7.1–7.3)
+  - All internal components (Section 8)
+  - Platform matrix (Section 9)
+  - Dependency map (Section 10)
+  - Detailed milestone breakdown M0–M8 (Section 11) with acceptance criteria
+  - Testing strategy (Section 12)
+  - Publication strategy (Section 13)
+  - Risk register (Section 14)
+  - Glossary (Section 15)
+- Updated `.agent/` directory layout in this file to reference `docs/PLAN.md`.
+
+### 2026-05-02 — Session 6
 - Memory file was stale — updated to reflect all work done in sessions 4–5.
 - No new code changed in this session — memory sync + commit only.
 
