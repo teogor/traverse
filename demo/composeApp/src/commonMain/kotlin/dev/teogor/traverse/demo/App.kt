@@ -15,6 +15,8 @@ import dev.teogor.traverse.compose.result.CollectTraverseResultOnce
 import dev.teogor.traverse.compose.transition.TraverseTransitionSpec
 import dev.teogor.traverse.core.navigator.launchAsNewRoot
 import dev.teogor.traverse.demo.dialog.ShowcaseDialogContent
+import dev.teogor.traverse.demo.feature.AnimationPreviewScreen
+import dev.teogor.traverse.demo.feature.AnimationShowcaseScreen
 import dev.teogor.traverse.demo.feature.ColorPickerScreen
 import dev.teogor.traverse.demo.feature.DeepLinkDemoScreen
 import dev.teogor.traverse.demo.feature.DeepLinkTargetScreen
@@ -79,6 +81,7 @@ fun App(
                     onStackControl = { nav.navigate(StackControl) },
                     onSingleTop = { nav.navigate(SingleTopDemo) },
                     onDeepLinks = { nav.navigate(DeepLinkDemo) },
+                    onAnimations = { nav.navigate(AnimationShowcase) },
                 )
             }
 
@@ -263,6 +266,93 @@ fun App(
                 DeepLinkTargetScreen(
                     id = dest.id,
                     onNavigateUp = { nav.navigateUp() },
+                )
+            }
+
+            // ── Feature: Transitions ──────────────────────────────────────────
+            // AnimationShowcase is registered with the host's default horizontalSlide so
+            // it slides in naturally. Each preview destination is registered with its own
+            // transitionSpec so the selected animation plays when navigating to it and back.
+            screen<AnimationShowcase> {
+                val nav = LocalTraverseNavigator.current
+                AnimationShowcaseScreen(
+                    onFade = { nav.navigate(AnimPreviewFade) },
+                    onHorizontalSlide = { nav.navigate(AnimPreviewHorizontalSlide) },
+                    onVerticalSlide = { nav.navigate(AnimPreviewVerticalSlide) },
+                    onSlideAndFade = { nav.navigate(AnimPreviewSlideAndFade) },
+                    onScaleAndFade = { nav.navigate(AnimPreviewScaleAndFade) },
+                    onElevate = { nav.navigate(AnimPreviewElevate) },
+                    onNone = { nav.navigate(AnimPreviewNone) },
+                )
+            }
+            screen<AnimPreviewFade>(transitionSpec = TraverseTransitionSpec.fade()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "Fade",
+                    apiCall = "fade()",
+                    pushDescription = "New screen fades in over the current screen.",
+                    popDescription = "Previous screen fades back in.",
+                    onBack = { nav.navigateUp() },
+                )
+            }
+            screen<AnimPreviewHorizontalSlide>(transitionSpec = TraverseTransitionSpec.horizontalSlide()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "Horizontal Slide",
+                    apiCall = "horizontalSlide()",
+                    pushDescription = "New screen slides in from the right; current exits to the left.",
+                    popDescription = "Current screen slides out to the right; previous enters from the left.",
+                    onBack = { nav.navigateUp() },
+                )
+            }
+            screen<AnimPreviewVerticalSlide>(transitionSpec = TraverseTransitionSpec.verticalSlide()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "Vertical Slide",
+                    apiCall = "verticalSlide()",
+                    pushDescription = "New screen slides up from the bottom; current scales back slightly.",
+                    popDescription = "Pop screen slides back down; previous scales up into view.",
+                    onBack = { nav.navigateUp() },
+                )
+            }
+            screen<AnimPreviewSlideAndFade>(transitionSpec = TraverseTransitionSpec.slideAndFade()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "Slide and Fade",
+                    apiCall = "slideAndFade()",
+                    pushDescription = "Slides in from the right 20% of width + fades in — Material Shared Axis X.",
+                    popDescription = "Slides back to the right 20% of width + fades out.",
+                    onBack = { nav.navigateUp() },
+                )
+            }
+            screen<AnimPreviewScaleAndFade>(transitionSpec = TraverseTransitionSpec.scaleAndFade()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "Scale and Fade",
+                    apiCall = "scaleAndFade()",
+                    pushDescription = "Grows from 92% scale + fades in — zoom into destination.",
+                    popDescription = "Shrinks back to 92% scale + fades out — zoom back to origin.",
+                    onBack = { nav.navigateUp() },
+                )
+            }
+            screen<AnimPreviewElevate>(transitionSpec = TraverseTransitionSpec.elevate()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "Elevate",
+                    apiCall = "elevate()",
+                    pushDescription = "Rises from 94% scale with a slight upward drift + fade in.",
+                    popDescription = "Drifts back down with scale-down + fade out.",
+                    onBack = { nav.navigateUp() },
+                )
+            }
+            screen<AnimPreviewNone>(transitionSpec = TraverseTransitionSpec.none()) {
+                val nav = LocalTraverseNavigator.current
+                AnimationPreviewScreen(
+                    name = "None",
+                    apiCall = "none()",
+                    pushDescription = "Instant cut — no enter animation whatsoever.",
+                    popDescription = "Instant cut — no pop animation whatsoever.",
+                    onBack = { nav.navigateUp() },
                 )
             }
         }

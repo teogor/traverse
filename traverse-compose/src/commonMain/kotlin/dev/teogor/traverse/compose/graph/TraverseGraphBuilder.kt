@@ -8,6 +8,7 @@ import dev.teogor.traverse.compose.internal.EntrySpec
 import dev.teogor.traverse.compose.internal.EntryType
 import dev.teogor.traverse.core.Destination
 import dev.teogor.traverse.core.dsl.TraverseDsl
+import dev.teogor.traverse.compose.transition.TraverseTransitionSpec
 import kotlinx.serialization.serializer
 
 /**
@@ -75,6 +76,32 @@ public class TraverseGraphBuilder internal constructor() {
             deepLinks = deepLinks,
         )
     }
+
+    // ── Screen (transitionSpec convenience overload) ───────────────────────────
+
+    /**
+     * Register a full-screen destination of type [T] using a [TraverseTransitionSpec] for all
+     * four transition directions at once — no need to spread the four lambda properties manually:
+     * ```kotlin
+     * screen<Settings>(transitionSpec = TraverseTransitionSpec.scaleAndFade()) { SettingsScreen() }
+     * ```
+     *
+     * @param transitionSpec Predefined or custom [TraverseTransitionSpec]. All four directions applied.
+     * @param deepLinks URI patterns that navigate to this destination.
+     * @param content Composable content. Receives the strongly-typed destination instance.
+     */
+    public inline fun <reified T : Destination> screen(
+        transitionSpec: TraverseTransitionSpec,
+        deepLinks: List<TraverseDeepLink> = emptyList(),
+        noinline content: @Composable (dest: T) -> Unit,
+    ): Unit = screen<T>(
+        enterTransition = transitionSpec.enterTransition,
+        exitTransition = transitionSpec.exitTransition,
+        popEnterTransition = transitionSpec.popEnterTransition,
+        popExitTransition = transitionSpec.popExitTransition,
+        deepLinks = deepLinks,
+        content = content,
+    )
 
     // ── Dialog ────────────────────────────────────────────────────────────────
 

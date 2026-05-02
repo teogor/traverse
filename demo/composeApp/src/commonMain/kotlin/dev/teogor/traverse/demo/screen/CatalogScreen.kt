@@ -43,6 +43,7 @@ private val FEATURES = listOf(
     FeatureEntry("📌", "Stack Control", "Build a deep stack then pop to a specific destination.", "popTo"),
     FeatureEntry("🔝", "Single Top", "Prevent duplicate destinations at the top of the back stack.", "launchSingleTop"),
     FeatureEntry("🔗", "Deep Links", "Navigate to destinations via URI patterns on any platform.", "deepLink()"),
+    FeatureEntry("🎬", "Transitions", "Explore built-in animation presets and define your own.", "TraverseTransitionSpec"),
 )
 
 /**
@@ -61,9 +62,10 @@ fun CatalogScreen(
     onStackControl: () -> Unit,
     onSingleTop: () -> Unit,
     onDeepLinks: () -> Unit,
+    onAnimations: () -> Unit,
 ) {
     val callbacks = listOf(
-        onNestedGraph, onTypedArgs, onResults, onDialog, onSheet, onStackControl, onSingleTop, onDeepLinks,
+        onNestedGraph, onTypedArgs, onResults, onDialog, onSheet, onStackControl, onSingleTop, onDeepLinks, onAnimations,
     )
 
     Scaffold(

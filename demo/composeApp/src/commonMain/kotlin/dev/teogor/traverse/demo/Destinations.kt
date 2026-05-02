@@ -74,3 +74,20 @@ import kotlinx.serialization.Serializable
  */
 @Serializable data class DeepLinkTarget(val id: String) : Destination
 
+// ── Feature: Custom Transitions ───────────────────────────────────────────────
+
+/** Animation showcase — lists all built-in transition presets. */
+@Serializable data object AnimationShowcase : Destination
+
+/**
+ * One destination object per animation preset so each can be registered with its own
+ * `transitionSpec` and transitions are visible when navigating both forward and back.
+ */
+@Serializable data object AnimPreviewFade : Destination
+@Serializable data object AnimPreviewHorizontalSlide : Destination
+@Serializable data object AnimPreviewVerticalSlide : Destination
+@Serializable data object AnimPreviewSlideAndFade : Destination
+@Serializable data object AnimPreviewScaleAndFade : Destination
+@Serializable data object AnimPreviewElevate : Destination
+@Serializable data object AnimPreviewNone : Destination
+
