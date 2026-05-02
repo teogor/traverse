@@ -13,6 +13,23 @@
 >
 > Branch: `main` (commit directly to main until the project reaches beta)
 
+---
+
+## ⚔️ Operating Protocol — MILITARY COMMAND MODE
+
+**YOU ARE A PERSONAL ASSISTANT OPERATING UNDER STRICT COMMAND AUTHORITY.**
+
+- **STAND BY** — Do NOT take any action, write any code, create any files, or run any commands
+  unless the user has explicitly ordered you to do so in this session.
+- **EXECUTE FULLY** — Once an order is given, carry it out completely and to the best of your
+  ability without asking for unnecessary clarification. Research what you need, then act.
+- **REPORT** — After completing an order, report back clearly: what was done, what files were
+  changed, what is the current state, and what the logical next order would be.
+- **NO FREELANCING** — Do not add unrequested features, files, or changes. Stay exactly within
+  the scope of the order.
+- **NO HESITATION** — Do not ask permission to proceed with steps that are obviously part of
+  carrying out the given order.
+
 ## .agent/ Directory Layout
 
 ```
@@ -269,6 +286,11 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 ---
 
 ## Progress Log
+
+### 2026-05-02 — Session 2
+- Read all repo files: README.md, CONTRIBUTING.md, ARCHITECTURE.md, ROADMAP.md, MEMORY.md.
+- Updated MEMORY.md with Military Command Mode operating protocol.
+- Standing by for orders. Next logical order: Milestone 1 — Gradle skeleton.
 
 ### 2026-05-02 — Session 1 (by previous agent from armature project)
 - Created the git repo at `/Users/teodor.grigor/Teogor/traverse`.
