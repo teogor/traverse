@@ -44,6 +44,9 @@ public class FakeTraverseNavigator(
 
     override val backStack: List<Destination> get() = _backStack
 
+    // currentDestination and canNavigateUp inherit their default implementations from
+    // TraverseNavigator (backStack.last() and backStack.size > 1 respectively).
+
     // ── Navigation history ────────────────────────────────────────────────────
 
     /** All [navigate] calls recorded since creation or the last [reset]. */
