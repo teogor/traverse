@@ -14,6 +14,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project(":traverse-core"))
+            implementation(project(":traverse-compose"))
             implementation(libs.jetbrains.compose.runtime)
             implementation(libs.jetbrains.compose.foundation)
             implementation(libs.jetbrains.compose.material3)
