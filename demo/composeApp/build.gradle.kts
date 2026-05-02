@@ -2,6 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     id("traverse.kmp.application")
+    id("traverse.compose")
     alias(libs.plugins.jetbrains.compose.hot.reload)
 }
 

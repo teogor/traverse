@@ -1,5 +1,6 @@
 plugins {
-    id("traverse.kmp.library.compose")
+    id("traverse.kmp.library")
+    id("traverse.compose")
     alias(libs.plugins.jetbrains.kotlin.serialization)
 }
 
