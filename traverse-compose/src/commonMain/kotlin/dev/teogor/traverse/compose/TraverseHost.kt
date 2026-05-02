@@ -210,14 +210,12 @@ private fun TraverseAnimatedHostCore(
             }
 
             screenDest?.let { currentScreen ->
-                // Read progress/edge in composable scope here — both the background layer
-                // and the foreground AnimatedContent capture these values by closure.
+                // Read progress/edge in composable scope — captured by both layers below.
                 val progress = LocalPredictiveBackProgress.current
                 val edge = LocalPredictiveBackSwipeEdge.current
 
-                // The screen the user is navigating back TO. Only used when a back gesture
-                // is in progress (progress > 0) to display it beneath the shrinking screen.
-                // Keyed on backStack.size so it recomputes when navigation commits/pops.
+                // Previous screen destination — shown as background during a back gesture.
+                // Keyed on backStack.size: stable during gesture, recomputes on navigation commit.
                 val prevScreenDest: Destination? = remember(backStack.size) {
                     val screens = backStack.filter {
                         graphBuilder.findSpec(it)?.type == EntryType.SCREEN
@@ -225,87 +223,78 @@ private fun TraverseAnimatedHostCore(
                     screens.getOrNull(screens.size - 2)
                 }
 
-                // Wrapper Box receives the caller's modifier (fillMaxSize, padding, etc.).
-                // Everything inside uses matchParentSize() so the two layers overlap exactly.
-                Box(modifier = modifier) {
-                    // ── Background layer ────────────────────────────────────────────────────
-                    // Previous screen revealed as the foreground screen shrinks away.
-                    // Scales from 95% → 100% (material-you "peeks" out from behind).
-                    // Not rendered when progress == 0f (normal navigation, no gesture).
-                    if (progress > 0f && prevScreenDest != null) {
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .graphicsLayer {
-                                    val bgScale = lerp(0.95f, 1.0f, progress)
-                                    scaleX = bgScale
-                                    scaleY = bgScale
-                                },
-                        ) {
-                            graphBuilder.findSpec(prevScreenDest)?.content?.invoke(prevScreenDest)
-                        }
+                // ── Background layer ────────────────────────────────────────────────────────
+                // Previous screen revealed as the foreground shrinks — scales 95% → 100%.
+                // Declared as a sibling BEFORE AnimatedContent so it renders beneath it (lower Z).
+                // Omitted entirely when progress == 0f (no gesture) → zero overhead normally.
+                if (progress > 0f && prevScreenDest != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                val bgScale = lerp(0.95f, 1.0f, progress)
+                                scaleX = bgScale
+                                scaleY = bgScale
+                            },
+                    ) {
+                        graphBuilder.findSpec(prevScreenDest)?.content?.invoke(prevScreenDest)
                     }
+                }
 
-                    // ── Foreground layer ────────────────────────────────────────────────────
-                    // Current screen managed by AnimatedContent for enter/exit transitions.
-                    // During a back gesture it shrinks, rounds its corners, and shifts toward
-                    // the swipe edge revealing the background layer behind it.
-                    AnimatedContent(
-                        targetState = currentScreen,
-                        modifier = Modifier.matchParentSize(),
-                        transitionSpec = {
-                            // Pop detection: the outgoing destination is no longer on the stack.
-                            val isPop = !backStack.contains(initialState)
-                            val targetSpec = graphBuilder.findSpec(targetState)
-                            val initialSpec = graphBuilder.findSpec(initialState)
+                // ── Foreground layer ────────────────────────────────────────────────────────
+                // Original AnimatedContent — modifier from caller is preserved unchanged.
+                // During a back gesture: shrinks, rounds corners, shifts toward swipe edge.
+                AnimatedContent(
+                    targetState = currentScreen,
+                    modifier = modifier,
+                    transitionSpec = {
+                        // Pop detection: the outgoing destination is no longer on the stack.
+                        val isPop = !backStack.contains(initialState)
+                        val targetSpec = graphBuilder.findSpec(targetState)
+                        val initialSpec = graphBuilder.findSpec(initialState)
 
-                            if (isPop) {
-                                // popEnter: prefer the incoming (target) spec, fallback to outgoing, then global.
-                                val enter = targetSpec?.popEnterTransition?.invoke()
-                                    ?: initialSpec?.popEnterTransition?.invoke()
-                                    ?: transitions?.popEnterTransition?.invoke()
-                                    ?: fadeIn()
-                                // popExit: prefer the outgoing (initial) spec, fallback to incoming, then global.
-                                val exit = initialSpec?.popExitTransition?.invoke()
-                                    ?: targetSpec?.popExitTransition?.invoke()
-                                    ?: transitions?.popExitTransition?.invoke()
-                                    ?: fadeOut()
-                                enter togetherWith exit
-                            } else {
-                                // enter: prefer the incoming (target) spec, then global.
-                                val enter = targetSpec?.enterTransition?.invoke()
-                                    ?: transitions?.enterTransition?.invoke()
-                                    ?: fadeIn()
-                                // exit: prefer the outgoing (initial) spec, then global.
-                                val exit = initialSpec?.exitTransition?.invoke()
-                                    ?: transitions?.exitTransition?.invoke()
-                                    ?: fadeOut()
-                                enter togetherWith exit
+                        if (isPop) {
+                            val enter = targetSpec?.popEnterTransition?.invoke()
+                                ?: initialSpec?.popEnterTransition?.invoke()
+                                ?: transitions?.popEnterTransition?.invoke()
+                                ?: fadeIn()
+                            val exit = initialSpec?.popExitTransition?.invoke()
+                                ?: targetSpec?.popExitTransition?.invoke()
+                                ?: transitions?.popExitTransition?.invoke()
+                                ?: fadeOut()
+                            enter togetherWith exit
+                        } else {
+                            val enter = targetSpec?.enterTransition?.invoke()
+                                ?: transitions?.enterTransition?.invoke()
+                                ?: fadeIn()
+                            val exit = initialSpec?.exitTransition?.invoke()
+                                ?: transitions?.exitTransition?.invoke()
+                                ?: fadeOut()
+                            enter togetherWith exit
+                        }
+                    },
+                    contentKey = { it },
+                    label = "TraverseHost",
+                ) { dest ->
+                    // Material-You shrink-and-round transform using closure-captured progress/edge.
+                    // When progress == 0f this graphicsLayer is an exact no-op.
+                    Box(
+                        modifier = Modifier.graphicsLayer {
+                            if (progress > 0f) {
+                                val scale = lerp(1f, 0.9f, progress)
+                                scaleX = scale
+                                scaleY = scale
+                                translationX = when (edge) {
+                                    0 -> lerp(0f, 32.dp.toPx(), progress)  // left edge → shift right
+                                    1 -> lerp(0f, -32.dp.toPx(), progress) // right edge → shift left
+                                    else -> 0f
+                                }
+                                clip = true
+                                shape = RoundedCornerShape(lerp(0f, 28f, progress).dp)
                             }
                         },
-                        contentKey = { it },
-                        label = "TraverseHost",
-                    ) { dest ->
-                        // Material-You shrink-and-round transform using closure-captured progress/edge.
-                        // When progress == 0f this graphicsLayer is an exact no-op.
-                        Box(
-                            modifier = Modifier.graphicsLayer {
-                                if (progress > 0f) {
-                                    val scale = lerp(1f, 0.9f, progress)
-                                    scaleX = scale
-                                    scaleY = scale
-                                    translationX = when (edge) {
-                                        0 -> lerp(0f, 32.dp.toPx(), progress)  // left edge → shift right
-                                        1 -> lerp(0f, -32.dp.toPx(), progress) // right edge → shift left
-                                        else -> 0f
-                                    }
-                                    clip = true
-                                    shape = RoundedCornerShape(lerp(0f, 28f, progress).dp)
-                                }
-                            },
-                        ) {
-                            graphBuilder.findSpec(dest)?.content?.invoke(dest)
-                        }
+                    ) {
+                        graphBuilder.findSpec(dest)?.content?.invoke(dest)
                     }
                 }
             }
