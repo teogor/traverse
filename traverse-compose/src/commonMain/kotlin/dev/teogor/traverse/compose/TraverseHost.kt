@@ -15,8 +15,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import dev.teogor.traverse.compose.backgesture.LocalPredictiveBackProgress
@@ -27,6 +29,7 @@ import dev.teogor.traverse.compose.graph.TraverseGraphBuilder
 import dev.teogor.traverse.compose.internal.EntryType
 import dev.teogor.traverse.compose.navigator.DefaultTraverseNavigator
 import dev.teogor.traverse.compose.navigator.LocalTraverseNavigator
+import dev.teogor.traverse.compose.savedstate.buildBackStackSaver
 import dev.teogor.traverse.compose.transition.TraverseTransitionSpec
 import dev.teogor.traverse.core.Destination
 import dev.teogor.traverse.core.navigator.TraverseNavigator
@@ -100,7 +103,19 @@ public fun TraverseHost(
         // ── Default path — host owns the back stack ───────────────────────────
         else -> {
             val resolvedStart = graphBuilder.nestedGraphKeys[startDestination::class] ?: startDestination
-            val backStack = remember { mutableStateListOf(resolvedStart) }
+
+            // Build a polymorphic JSON saver from the registered screen serializers so the
+            // back stack survives configuration changes (and process death on Android).
+            // Falls back to a plain mutableStateListOf if no entry has a serializer.
+            val saver = remember(graphBuilder) { buildBackStackSaver(graphBuilder) }
+
+            @Suppress("UNCHECKED_CAST")
+            val backStack: SnapshotStateList<Destination> = if (saver != null) {
+                rememberSaveable(saver = saver) { mutableStateListOf(resolvedStart) }
+            } else {
+                remember { mutableStateListOf(resolvedStart) }
+            }
+
             val internalNavigator = remember(backStack) {
                 DefaultTraverseNavigator(backStack, graphBuilder.nestedGraphKeys)
             }
