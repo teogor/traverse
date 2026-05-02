@@ -3,10 +3,12 @@ package dev.teogor.traverse.compose.graph
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import dev.teogor.traverse.compose.deeplink.TraverseDeepLink
 import dev.teogor.traverse.compose.internal.EntrySpec
 import dev.teogor.traverse.compose.internal.EntryType
 import dev.teogor.traverse.core.Destination
 import dev.teogor.traverse.core.dsl.TraverseDsl
+import kotlinx.serialization.serializer
 
 /**
  * DSL scope for registering navigation destinations inside [TraverseHost].
@@ -46,6 +48,10 @@ public class TraverseGraphBuilder internal constructor() {
      * @param exitTransition     Exit animation when this destination is replaced (another pushes in).
      * @param popEnterTransition Enter animation when returning to this destination via back navigation.
      * @param popExitTransition  Exit animation when this destination is popped off the stack.
+     * @param deepLinks          URI patterns that navigate to this destination.
+     *   Use [deepLink] to build each entry, e.g. `listOf(deepLink("https://app.example.com/user/{userId}"))`.
+     *   Extracted URI params are mapped to the destination constructor fields by name via
+     *   `kotlinx.serialization`, so the destination must be `@Serializable`.
      * @param content            Composable content. Receives the strongly-typed destination instance.
      */
     public inline fun <reified T : Destination> screen(
@@ -53,17 +59,20 @@ public class TraverseGraphBuilder internal constructor() {
         noinline exitTransition: (() -> ExitTransition)? = null,
         noinline popEnterTransition: (() -> EnterTransition)? = null,
         noinline popExitTransition: (() -> ExitTransition)? = null,
+        deepLinks: List<TraverseDeepLink> = emptyList(),
         noinline content: @Composable (dest: T) -> Unit,
     ) {
         @Suppress("UNCHECKED_CAST")
         entries += EntrySpec(
             klass = T::class,
+            serializer = runCatching { serializer<T>() }.getOrNull(),
             type = EntryType.SCREEN,
             content = { dest -> content(dest as T) },
             enterTransition = enterTransition,
             exitTransition = exitTransition,
             popEnterTransition = popEnterTransition,
             popExitTransition = popExitTransition,
+            deepLinks = deepLinks,
         )
     }
 

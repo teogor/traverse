@@ -59,3 +59,18 @@ import kotlinx.serialization.Serializable
 // ── Feature: launchSingleTop ──────────────────────────────────────────────────
 
 @Serializable data object SingleTopDemo : Destination
+
+// ── Feature: Deep Links ───────────────────────────────────────────────────────
+
+/** Entry screen for the deep link demo. */
+@Serializable data object DeepLinkDemo : Destination
+
+/**
+ * A destination reached via deep link.
+ *
+ * Registered patterns in the demo:
+ *   - `traverse://demo/target/{id}`
+ *   - `https://traverse.teogor.dev/target/{id}`
+ */
+@Serializable data class DeepLinkTarget(val id: String) : Destination
+

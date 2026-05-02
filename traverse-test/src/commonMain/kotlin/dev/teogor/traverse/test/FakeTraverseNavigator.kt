@@ -58,6 +58,10 @@ public class FakeTraverseNavigator(
     public val popToCalls: List<PopToCall> get() = _popToCalls
     private val _popToCalls: MutableList<PopToCall> = mutableListOf()
 
+    /** All [navigateToDeepLink] calls recorded since creation or the last [reset]. */
+    public val deepLinkCalls: List<String> get() = _deepLinkCalls
+    private val _deepLinkCalls: MutableList<String> = mutableListOf()
+
     // ── Results ───────────────────────────────────────────────────────────────
 
     /** Snapshot of all currently stored results (set via [setResult], cleared via [clearResult]). */
@@ -123,6 +127,11 @@ public class FakeTraverseNavigator(
             .filter { it.first == key }
             .map { it.second as T }
 
+    override fun navigateToDeepLink(uri: String): Boolean {
+        _deepLinkCalls += uri
+        return false // FakeTraverseNavigator has no deep-link registry; use assertDeepLinkNavigatedTo only.
+    }
+
     // ── Test helpers ──────────────────────────────────────────────────────────
 
     /**
@@ -132,6 +141,7 @@ public class FakeTraverseNavigator(
     public fun reset() {
         _navigateCalls.clear()
         _popToCalls.clear()
+        _deepLinkCalls.clear()
         navigateUpCount = 0
         _results.clear()
     }

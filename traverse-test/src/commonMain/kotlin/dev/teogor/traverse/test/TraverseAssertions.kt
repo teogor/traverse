@@ -158,3 +158,32 @@ public fun FakeTraverseNavigator.assertNoNavigation() {
     )
 }
 
+/**
+ * Asserts that [navigateToDeepLink] was called with exactly [expectedUri].
+ *
+ * ```kotlin
+ * fake.assertDeepLinkNavigatedTo("traverse://demo/target/42")
+ * ```
+ */
+public fun FakeTraverseNavigator.assertDeepLinkNavigatedTo(expectedUri: String) {
+    assertTrue(
+        deepLinkCalls.contains(expectedUri),
+        "Expected navigateToDeepLink(\"$expectedUri\") to be called. " +
+            "Actual calls: ${deepLinkCalls.ifEmpty { listOf("<none>") }}",
+    )
+}
+
+/**
+ * Asserts that [navigateToDeepLink] was called at least once.
+ *
+ * ```kotlin
+ * fake.assertDeepLinkNavigated()
+ * ```
+ */
+public fun FakeTraverseNavigator.assertDeepLinkNavigated() {
+    assertTrue(
+        deepLinkCalls.isNotEmpty(),
+        "Expected at least one navigateToDeepLink() call but none were recorded.",
+    )
+}
+

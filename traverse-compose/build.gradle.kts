@@ -16,6 +16,7 @@ kotlin {
             implementation(libs.jetbrains.compose.ui)
             implementation(libs.jetbrains.compose.material3)
             implementation(libs.jetbrains.kotlinx.serialization.core)
+            implementation(libs.jetbrains.kotlinx.serialization.json)
             implementation(libs.jetbrains.kotlinx.coroutines.core)
             implementation(libs.jetbrains.androidx.lifecycle.runtime.compose)
         }

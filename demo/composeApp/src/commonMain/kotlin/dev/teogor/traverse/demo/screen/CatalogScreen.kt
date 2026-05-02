@@ -42,6 +42,7 @@ private val FEATURES = listOf(
     FeatureEntry("📋", "Bottom Sheet", "A destination rendered as a ModalBottomSheet overlay.", "bottomSheet<T>"),
     FeatureEntry("📌", "Stack Control", "Build a deep stack then pop to a specific destination.", "popTo"),
     FeatureEntry("🔝", "Single Top", "Prevent duplicate destinations at the top of the back stack.", "launchSingleTop"),
+    FeatureEntry("🔗", "Deep Links", "Navigate to destinations via URI patterns on any platform.", "deepLink()"),
 )
 
 /**
@@ -59,9 +60,10 @@ fun CatalogScreen(
     onSheet: () -> Unit,
     onStackControl: () -> Unit,
     onSingleTop: () -> Unit,
+    onDeepLinks: () -> Unit,
 ) {
     val callbacks = listOf(
-        onNestedGraph, onTypedArgs, onResults, onDialog, onSheet, onStackControl, onSingleTop,
+        onNestedGraph, onTypedArgs, onResults, onDialog, onSheet, onStackControl, onSingleTop, onDeepLinks,
     )
 
     Scaffold(

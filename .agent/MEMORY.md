@@ -256,11 +256,12 @@ public data class TraverseTransitionSpec(
 | `traverse-core` M2 source files (Navigator, NavOptions, extensions, result helpers, DSL marker) | ✅ |
 | `traverse-core` unit tests (15 passing — extensions + NavOptions) | ✅ |
 | `traverse-compose` first source files (TraverseHost, DefaultNavigator, etc.) | ✅ M3 COMPLETE |
-| `traverse-test` module skeleton (build.gradle.kts + FakeTraverseNavigator + TraverseAssertions) | ✅ M4 COMPLETE — 29 tests passing |
+| `traverse-test` module skeleton (build.gradle.kts + FakeTraverseNavigator + TraverseAssertions) | ✅ M4 COMPLETE — 36 tests passing |
+| Deep links (M6) | ✅ M6 COMPLETE — `TraverseDeepLink` + matcher + registry + `navigateToDeepLink` + demo + 64 total tests |
 
-**Current architecture:** `DefaultTraverseNavigator` uses `SnapshotStateList<Destination>`. `TraverseHost` uses `AnimatedContent` for screen transitions. Dialogs/bottom sheets rendered as overlays. nav3 is NOT a dependency.
+**Current architecture:** `DefaultTraverseNavigator` uses `SnapshotStateList<Destination>`. `TraverseHost` uses `AnimatedContent` for screen transitions. Dialogs/bottom sheets rendered as overlays. nav3 is NOT a dependency. Deep links use regex pattern matching + `kotlinx-serialization-json` for destination reconstruction.
 
-**Next task for the next agent:** Milestone 6 — Deep Links, or proceed to Milestone 7 (Publication) when ready.
+**Next task for the next agent:** Milestone 7 — Publication (Maven Central, GitHub Actions CI, Dokka, binary compatibility validator).
 
 ---
 
@@ -272,7 +273,7 @@ public data class TraverseTransitionSpec(
 2. ✅ **Platform support** — VERIFIED: Android + iOS + Desktop + **wasmJs** all supported as of `1.0.0-alpha05`. Include `wasmJs` in KMP targets.
 3. ✅ **`Destination` interface design** — Option A chosen: `Destination` is a plain marker interface, does NOT extend `NavKey`. `traverse-core` is fully framework-free.
 4. ✅ **`SavedStateConfiguration`** — No longer needed. We use a plain `SnapshotStateList<Destination>`. Saved state (process death) is deferred to a future milestone.
-5. **Multi-module serialization** — Still relevant for future saved-state feature. `EntrySpec.serializer` field kept as nullable (`KSerializer<out Destination>? = null`). Will be populated via `inline reified` call sites in a future saved-state milestone.
+5. ✅ **Multi-module serialization** — `EntrySpec.serializer` is now populated via `runCatching { serializer<T>() }` in `screen<T>()`. Used by the deep-link engine (M6). Will also power saved-state in a future milestone.
 6. ✅ **nav3 nested back-stack API** — Not used. Nested graphs resolved via `nestedGraphKeys` map in `DefaultTraverseNavigator`. `graphKey` destinations redirect to their `startDestination` at navigate-time.
 7. ✅ **nav3 `dialog` and `bottomSheet` types** — Implemented without nav3: dialog entries are rendered via Compose `Dialog {}`, bottom sheets via `ModalBottomSheet {}`, as overlays on top of `AnimatedContent`.
 8. ✅ **`SavedStateHandle` on iOS/Web** — `TraverseResultStore` backed by `MutableSharedFlow` already implemented in `traverse-compose/internal/TraverseResultStore.kt`.
@@ -364,7 +365,25 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 17 (current)
+### 2026-05-02 — Session 18 (current)
+- **M6 complete — Deep Links:**
+  1. **`TraverseDeepLink`** — `data class TraverseDeepLink(uriPattern, action?, mimeType?)` + `deepLink()` factory. Public API in `traverse-compose/deeplink/`.
+  2. **`TraverseDeepLinkMatcher`** — compiles `{param}` URI patterns to positional-group regex (KMP-safe; no named groups). Extracts path + query params from URIs. Fragment stripping included.
+  3. **`TraverseDeepLinkRegistry`** — holds all compiled patterns from `EntrySpec.deepLinks`. `resolve(uri)` matches URI → reconstructs `Destination` via `kotlinx-serialization-json` (String→Long/Double/Boolean coercion handled by building typed `JsonPrimitive` values). Injected into `DefaultTraverseNavigator` by `TraverseHost`.
+  4. **`EntrySpec.serializer` now populated** — `screen<T>()` captures `serializer<T>()` via `runCatching` (safe, no crash if T lacks serializer). `deepLinks: List<TraverseDeepLink>` field added.
+  5. **`TraverseGraphBuilder.screen<T>`** — new `deepLinks` param; serializer capture.
+  6. **`TraverseNavigator.navigateToDeepLink(uri: String): Boolean`** — added to interface with default `false`. Production implementation in `DefaultTraverseNavigator` uses the registry.
+  7. **`TraverseHost`** — builds `TraverseDeepLinkRegistry` from graph entries; injects into both default and external-navigator paths.
+  8. **`FakeTraverseNavigator`** — records all `navigateToDeepLink()` calls in `deepLinkCalls: List<String>`; `reset()` clears them. Assertions: `assertDeepLinkNavigatedTo(uri)`, `assertDeepLinkNavigated()`.
+  9. **Demo** — `DeepLinkDemo` + `DeepLinkTarget(id: String)` destinations; interactive `DeepLinkDemoScreen` with pre-built URIs + free-text input; `DeepLinkTargetScreen` shows extracted param. `FeatureDetail` now also deep-linkable via `traverse://demo/feature/{featureId}`. Android `MainActivity` handles `Intent.data` + `onNewIntent`.
+  10. **Added `kotlinx-serialization-json`** to `libs.versions.toml` + `traverse-compose/build.gradle.kts`.
+  11. **`README.md` fully rewritten** — removed ALL stale nav3 references; added Web/JS platform; added Deep Links section; added Multiple Back Stacks section; corrected comparison table + design philosophy.
+  12. **ROADMAP.md** — M6 ticked off as ✅ with full checklist.
+  13. **`docs/FEATURES.md`** — Section 9 Deep Links updated from 📋 Planned to ✅ Shipped with full API table.
+  14. **`traverse-compose` tests** — 13 `TraverseDeepLinkMatcherTest` tests; **`traverse-test`** — 7 new `FakeTraverseNavigatorDeepLinkTest` tests.
+- **Build:** `BUILD SUCCESSFUL` across JVM, Android, iOS, JS, WasmJs ✅
+- **Tests:** 64 passing total (15 core + 13 compose deeplink + 36 traverse-test) ✅
+- **Next task:** M7 — Publication (Maven Central, GitHub Actions CI, Dokka, binary compatibility validator).
 - **Implemented all outstanding pre-publication features:**
   1. **Per-screen transition overrides** — `screen<T>()` in `TraverseGraphBuilder` now accepts
      `enterTransition`, `exitTransition`, `popEnterTransition`, `popExitTransition` lambdas.

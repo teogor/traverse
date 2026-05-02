@@ -12,10 +12,10 @@
 | Module | Status | Tests |
 |---|---|---|
 | `traverse-core` | ✅ M2 complete | 15 passing |
-| `traverse-compose` | ✅ M3 complete | — (build-verified) |
-| `traverse-test` | ✅ M4 complete | 29 passing |
+| `traverse-compose` | ✅ M3 complete | 13 passing (deep link matcher) |
+| `traverse-test` | ✅ M4 complete | 36 passing |
 | Demo app | ✅ M5 complete | — (runtime-verified) |
-| Deep links | 📋 M6 | — |
+| Deep links | ✅ M6 complete | 13 matcher tests |
 | Publication | 📋 M7 | — |
 
 ---
@@ -224,23 +224,33 @@ All backed by `MutableSharedFlow(replay = 1)` — works identically on all 6 pla
 
 ## 9. Deep Links
 
-### 📋 Planned (M6)
+### ✅ Shipped (M6)
 
-| Feature | Description |
-|---|---|
-| `deepLink<T>(uriPattern)` | DSL registration inside `screen<T>` |
-| URI pattern matching | `{paramName}` extracts fields from data class destinations |
-| Android: Intent handler | `TraverseDeepLinkHandler` reads Intent URI → pushes matched destination |
-| iOS: URL scheme handler | `TraverseDeepLinkHandler.handleUrl(url)` from `AppDelegate` |
-| Desktop: CLI / protocol | `TraverseDeepLinkHandler.handleUri(uri)` at startup |
-| Web: query-string navigation | Parse initial URL in wasmJs / JS, push matched destination |
-| Programmatic | `nav.navigateToDeepLink(uri: String)` |
+| Feature | API | Notes |
+|---|---|---|
+| DSL registration | `screen<T>(deepLinks = listOf(deepLink("pattern/{param}")))` | In `TraverseGraphBuilder.screen` |
+| URI pattern matching | `{paramName}` in path and query segments | Regex-based, KMP-safe positional groups |
+| Destination reconstruction | `@Serializable` + `kotlinx-serialization-json` | String→Long/Double/Boolean coercion |
+| Programmatic navigation | `navigator.navigateToDeepLink(uri): Boolean` | Returns `false` when no pattern matches |
+| Android: Intent handler | `MainActivity.onCreate` reads `intent.data` | URI passed to `App(pendingDeepLink=...)` |
+| Multi-scheme support | `traverse://`, `https://`, any custom scheme | One destination can have multiple patterns |
+| Test support | `fake.deepLinkCalls`, `assertDeepLinkNavigatedTo(uri)` | `FakeTraverseNavigator` records calls |
+| Multiple patterns per destination | `deepLinks = listOf(deepLink("a"), deepLink("b"))` | All registered in `TraverseDeepLinkRegistry` |
+| Query parameter extraction | Params after `?` merged with path params | Available to serialization reconstruction |
+
+**Registered demo URIs:**
+- `traverse://demo/target/{id}` → `DeepLinkTarget(id)`
+- `https://traverse.teogor.dev/target/{id}` → `DeepLinkTarget(id)`
+- `traverse://demo/feature/{featureId}` → `FeatureDetail(featureId)`
 
 ### 💡 Ideas
 
-- **Type-safe deep link builder** — `DeepLink.build<Profile>(userId = "42")` → `"traverse://app/profile/42"` without string concatenation
-- **Deep link testing utilities** — `fake.simulateDeepLink(uri)` assertion helper
-- **Deferred deep links** — queue a deep link to navigate after onboarding completes (first-install pattern)
+- **Type-safe deep link builder** — `DeepLink.build<Profile>(userId = "42")` → URI without string concatenation
+- **Deep link testing utilities** — `fake.simulateDeepLink(uri)` with actual registry matching
+- **Deferred deep links** — queue a deep link to navigate after onboarding (first-install pattern)
+- **iOS URL scheme handler** — `TraverseDeepLinkHandler.handleUrl(url)` called from `AppDelegate`
+- **Desktop protocol handler** — register OS-level URI scheme, call `navigateToDeepLink` at startup
+- **Web: initial URL routing** — parse `window.location` on wasmJs startup and navigate
 
 ---
 
@@ -368,14 +378,14 @@ The current approach (zero codegen) is the primary path. KSP is an opt-in overla
 | Area | ✅ Done | 📋 Next | 💡 Ideas |
 |---|---|---|---|
 | Core Navigation | Forward, back, popTo, singleTop, launchAsNewRoot | — | Replace, history cursor |
-| Destination Types | screen, dialog, bottomSheet, nested | **Per-screen transitions ✅** | fullScreenDialog, sideSheet, popover, guard |
-| Transitions | fade, slide, none, custom, **per-destination ✅** | Predictive back | verticalSlide, scale, shared element |
+| Destination Types | screen, dialog, bottomSheet, nested | — | fullScreenDialog, sideSheet, popover, guard |
+| Transitions | fade, slide, none, custom, per-destination | Predictive back | verticalSlide, scale, shared element |
 | Results | setResult, setResultAndNavigateUp, CollectOnce | — | Typed keys, awaitResult, timeout |
-| Testing | FakeNavigator + 8 assertion helpers | ComposeTestRule | Lambda assertions, state machine tests |
+| Testing | FakeNavigator + 8 assertion helpers + deepLink assertions | ComposeTestRule | Lambda assertions, state machine tests |
 | Back Gesture | Android ✅, Desktop ✅ (Escape / Alt+Left), others stub | Predictive back (Android 14+), Browser history |
-| Deep Links | — | Full M6 feature | Type-safe builder, deferred deep links |
+| Deep Links | ✅ DSL + matcher + registry + `navigateToDeepLink` + Android intent | iOS/Desktop/Web OS integration | Type-safe builder, deferred deep links |
 | Tab Navigation | `rememberTraverseNavigator` ✅ | — | Saved-state per tab |
-| Saved State | EntrySpec.serializer reserved | Back stack persistence | Platform storage adapters |
+| Saved State | EntrySpec.serializer populated (now used by deep links) | Back stack persistence | Platform storage adapters |
 | Analytics | — | — | Interceptor, Firebase plugin |
 | ViewModel | — | — | Per-entry VM scoping |
 | Publication | — | M7: Maven Central + CI + Dokka | BOM, Gradle plugin |

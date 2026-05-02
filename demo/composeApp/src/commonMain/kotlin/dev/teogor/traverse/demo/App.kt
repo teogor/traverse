@@ -2,17 +2,22 @@ package dev.teogor.traverse.demo
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import dev.teogor.traverse.compose.TraverseHost
+import dev.teogor.traverse.compose.deeplink.deepLink
 import dev.teogor.traverse.compose.navigator.LocalTraverseNavigator
+import dev.teogor.traverse.compose.navigator.rememberTraverseNavigator
 import dev.teogor.traverse.compose.result.CollectTraverseResultOnce
 import dev.teogor.traverse.compose.transition.TraverseTransitionSpec
 import dev.teogor.traverse.core.navigator.launchAsNewRoot
 import dev.teogor.traverse.demo.dialog.ShowcaseDialogContent
 import dev.teogor.traverse.demo.feature.ColorPickerScreen
+import dev.teogor.traverse.demo.feature.DeepLinkDemoScreen
+import dev.teogor.traverse.demo.feature.DeepLinkTargetScreen
 import dev.teogor.traverse.demo.feature.DialogDemoScreen
 import dev.teogor.traverse.demo.feature.NestedStepScreen
 import dev.teogor.traverse.demo.feature.ResultDemoScreen
@@ -25,15 +30,38 @@ import dev.teogor.traverse.demo.screen.CatalogScreen
 import dev.teogor.traverse.demo.screen.SplashScreen
 import dev.teogor.traverse.demo.sheet.OptionSheetContent
 
+/**
+ * Root composable for the Traverse Explorer demo app.
+ *
+ * @param pendingDeepLink  Optional URI received from an OS deep-link Intent (Android) or
+ *   protocol handler (Desktop). Consumed exactly once when the navigator is ready.
+ * @param onDeepLinkConsumed Callback invoked after [pendingDeepLink] has been dispatched
+ *   so the caller can clear the pending URI and avoid re-navigation on recomposition.
+ */
 @Composable
-fun App() {
+fun App(
+    pendingDeepLink: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     MaterialTheme {
+        // External navigator — lets us handle deep links via LaunchedEffect
+        // before the navigator is injected into TraverseHost.
+        val navigator = rememberTraverseNavigator(Splash)
+
+        // Dispatch an incoming OS deep link once the navigator (and its registry) is ready.
+        // LaunchedEffect runs after the first successful composition, so TraverseHost
+        // will have already wired deepLinkRegistry onto the navigator by then.
+        LaunchedEffect(pendingDeepLink) {
+            val uri = pendingDeepLink ?: return@LaunchedEffect
+            navigator.navigateToDeepLink(uri)
+            onDeepLinkConsumed()
+        }
+
         TraverseHost(
             startDestination = Splash,
+            navigator = navigator,
             transitions = TraverseTransitionSpec.horizontalSlide(),
         ) {
-
-            // ── Splash ────────────────────────────────────────────────────────
             screen<Splash> {
                 val nav = LocalTraverseNavigator.current
                 SplashScreen(onEnter = { nav.launchAsNewRoot<Splash>(Catalog) })
@@ -50,6 +78,7 @@ fun App() {
                     onSheet = { nav.navigate(SheetDemo) },
                     onStackControl = { nav.navigate(StackControl) },
                     onSingleTop = { nav.navigate(SingleTopDemo) },
+                    onDeepLinks = { nav.navigate(DeepLinkDemo) },
                 )
             }
 
@@ -91,7 +120,11 @@ fun App() {
             }
 
             // ── Feature: Typed Arguments ──────────────────────────────────────
-            screen<FeatureDetail> { dest ->
+            screen<FeatureDetail>(
+                deepLinks = listOf(
+                    deepLink("traverse://demo/feature/{featureId}"),
+                ),
+            ) { dest ->
                 val nav = LocalTraverseNavigator.current
                 TypedArgsScreen(
                     featureId = dest.featureId,
@@ -209,6 +242,27 @@ fun App() {
                     onNavigateSingleTop = {
                         nav.navigate(SingleTopDemo) { launchSingleTop = true }
                     },
+                )
+            }
+
+            // ── Feature: Deep Links ───────────────────────────────────────────
+            screen<DeepLinkDemo> {
+                val nav = LocalTraverseNavigator.current
+                DeepLinkDemoScreen(
+                    onNavigateToUri = { uri -> nav.navigateToDeepLink(uri) },
+                    onNavigateUp = { nav.navigateUp() },
+                )
+            }
+            screen<DeepLinkTarget>(
+                deepLinks = listOf(
+                    deepLink("traverse://demo/target/{id}"),
+                    deepLink("https://traverse.teogor.dev/target/{id}"),
+                ),
+            ) { dest ->
+                val nav = LocalTraverseNavigator.current
+                DeepLinkTargetScreen(
+                    id = dest.id,
+                    onNavigateUp = { nav.navigateUp() },
                 )
             }
         }

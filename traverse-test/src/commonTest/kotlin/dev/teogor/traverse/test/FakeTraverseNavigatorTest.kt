@@ -13,7 +13,54 @@ private data object Feed : Destination
 private data class Profile(val userId: String) : Destination
 private data object Settings : Destination
 
-// ── FakeTraverseNavigator — back stack behaviour ──────────────────────────────
+// ── FakeTraverseNavigator — deep link calls ───────────────────────────────────
+
+class FakeTraverseNavigatorDeepLinkTest {
+
+    @Test
+    fun navigateToDeepLink_recordsUri() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigateToDeepLink("traverse://demo/target/42")
+        assertEquals(listOf("traverse://demo/target/42"), fake.deepLinkCalls)
+    }
+
+    @Test
+    fun navigateToDeepLink_returnsFalse_sinceNoRegistryInFake() {
+        val fake = FakeTraverseNavigator(Home)
+        val result = fake.navigateToDeepLink("traverse://demo/target/42")
+        assertFalse(result)
+    }
+
+    @Test
+    fun navigateToDeepLink_multipleCalls_allRecorded() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigateToDeepLink("traverse://demo/a")
+        fake.navigateToDeepLink("traverse://demo/b")
+        assertEquals(2, fake.deepLinkCalls.size)
+    }
+
+    @Test
+    fun assertDeepLinkNavigatedTo_passesWhenUriMatches() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigateToDeepLink("traverse://demo/target/hello")
+        fake.assertDeepLinkNavigatedTo("traverse://demo/target/hello")
+    }
+
+    @Test
+    fun assertDeepLinkNavigated_passesWhenAtLeastOneCall() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigateToDeepLink("traverse://any/uri")
+        fake.assertDeepLinkNavigated()
+    }
+
+    @Test
+    fun reset_clearsDeepLinkCalls() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigateToDeepLink("traverse://demo/target/1")
+        fake.reset()
+        assertEquals(emptyList(), fake.deepLinkCalls)
+    }
+}
 
 class FakeTraverseNavigatorTest {
 

@@ -1,6 +1,7 @@
 package dev.teogor.traverse.compose.navigator
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import dev.teogor.traverse.compose.deeplink.TraverseDeepLinkRegistry
 import dev.teogor.traverse.compose.internal.TraverseResultStore
 import dev.teogor.traverse.core.Destination
 import dev.teogor.traverse.core.navigator.NavOptions
@@ -88,4 +89,26 @@ internal class DefaultTraverseNavigator(
     override fun <T> setResult(key: String, value: T) = resultStore.setResult(key, value)
     override fun clearResult(key: String) = resultStore.clearResult(key)
     override fun <T> observeResult(key: String): Flow<T> = resultStore.observeResult(key)
+
+    // ── Deep Links ────────────────────────────────────────────────────────────
+
+    /**
+     * The deep-link registry built from the host's [TraverseGraphBuilder] entries.
+     * Injected by [TraverseHost] before the first composition.
+     */
+    internal var deepLinkRegistry: TraverseDeepLinkRegistry? = null
+
+    /**
+     * Matches [uri] against every registered deep-link pattern, reconstructs the
+     * destination via `kotlinx.serialization`, and navigates to it.
+     *
+     * @return `true` if a match was found and navigation occurred, `false` otherwise.
+     */
+    override fun navigateToDeepLink(uri: String): Boolean {
+        val registry = deepLinkRegistry
+        if (registry == null || registry.isEmpty) return false
+        val destination = registry.resolve(uri) ?: return false
+        navigate(destination)
+        return true
+    }
 }

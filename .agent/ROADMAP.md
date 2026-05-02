@@ -110,13 +110,24 @@
 
 ---
 
-## Milestone 6 — Deep Links
+## Milestone 6 — Deep Links ✅
+*Goal: URI-based navigation for all platforms — DSL registration, pattern matching, programmatic navigation.*
 
-- [ ] Design URI scheme (`traverse://host/path?param=value`)
-- [ ] Android: Intent handling via `TraverseDeepLinkHandler`
-- [ ] Desktop: Custom URI scheme registration
-- [ ] iOS: URL scheme in `Info.plist` + handler
-- [ ] `deepLink<T>(uriPattern)` in `TraverseGraphBuilder`
+- [x] `TraverseDeepLink` public data class + `deepLink()` factory function
+- [x] `TraverseDeepLinkMatcher` — regex-based pattern compiler; extracts path + query params; KMP-safe positional groups
+- [x] `TraverseDeepLinkRegistry` — built from `TraverseGraphBuilder` entries; `resolve(uri): Destination?`
+- [x] Destination reconstruction via `kotlinx-serialization-json` — String → Long/Double/Boolean coercion
+- [x] `screen<T>(deepLinks = listOf(...))` — registration in `TraverseGraphBuilder`
+- [x] `EntrySpec.serializer` now populated (via `serializer<T>()` in inline reified `screen<T>`)
+- [x] `TraverseNavigator.navigateToDeepLink(uri: String): Boolean` — interface method with default `false`
+- [x] `DefaultTraverseNavigator.navigateToDeepLink` — production implementation using registry
+- [x] `TraverseHost` builds + injects `TraverseDeepLinkRegistry` into both default and external-navigator paths
+- [x] Android demo: `MainActivity` handles `Intent.data` + `onNewIntent`; URI passed to `App(pendingDeepLink)`
+- [x] `FakeTraverseNavigator.deepLinkCalls` list + `assertDeepLinkNavigatedTo(uri)` + `assertDeepLinkNavigated()`
+- [x] `TraverseDeepLinkMatcherTest` — 13 unit tests covering all matching scenarios
+- [x] `FakeTraverseNavigatorDeepLinkTest` — 7 unit tests
+- [x] Demo `DeepLinkDemo` screen with interactive URI input and pre-built examples
+- [x] `README.md` updated — Deep Links section, comparison table, design philosophy, Web platform
 
 ---
 

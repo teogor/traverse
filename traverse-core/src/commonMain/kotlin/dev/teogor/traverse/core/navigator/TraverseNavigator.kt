@@ -108,5 +108,24 @@ public interface TraverseNavigator {
      * which handles collection, type casting, and clearing automatically.
      */
     public fun <T> observeResult(key: String): Flow<T>
+
+    // ── Deep Links ────────────────────────────────────────────────────────────
+
+    /**
+     * Navigate to the destination associated with [uri] based on the deep links registered
+     * in the current [TraverseHost] graph.
+     *
+     * Returns `true` if a matching deep link was found and navigation was triggered,
+     * `false` if no registered pattern matched [uri].
+     *
+     * ```kotlin
+     * // Programmatic deep-link navigation:
+     * val handled = navigator.navigateToDeepLink("https://example.com/user/42")
+     *
+     * // Android — handle Activity intent:
+     * intent?.data?.toString()?.let { navigator.navigateToDeepLink(it) }
+     * ```
+     */
+    public fun navigateToDeepLink(uri: String): Boolean = false
 }
 

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import dev.teogor.traverse.compose.backgesture.TraverseBackHandler
 import dev.teogor.traverse.compose.backgesture.traverseBackKeyModifier
+import dev.teogor.traverse.compose.deeplink.TraverseDeepLinkRegistry
 import dev.teogor.traverse.compose.graph.TraverseGraphBuilder
 import dev.teogor.traverse.compose.internal.EntryType
 import dev.teogor.traverse.compose.navigator.DefaultTraverseNavigator
@@ -55,6 +56,11 @@ public fun TraverseHost(
     builder: TraverseGraphBuilder.() -> Unit,
 ) {
     val graphBuilder = remember { TraverseGraphBuilder().also(builder) }
+    val deepLinkRegistry = remember(graphBuilder) {
+        TraverseDeepLinkRegistry().also { reg ->
+            graphBuilder.entries.forEach { reg.register(it) }
+        }
+    }
 
     when {
         // ── External DefaultTraverseNavigator (rememberTraverseNavigator) ──────
@@ -62,6 +68,7 @@ public fun TraverseHost(
         // here so the navigator can resolve them at navigate() time.
         navigator is DefaultTraverseNavigator -> {
             navigator.nestedGraphKeys = graphBuilder.nestedGraphKeys
+            navigator.deepLinkRegistry = deepLinkRegistry
             TraverseAnimatedHostCore(
                 backStack = navigator.snapshotBackStack,
                 navigator = navigator,
@@ -88,6 +95,7 @@ public fun TraverseHost(
             val internalNavigator = remember(backStack) {
                 DefaultTraverseNavigator(backStack, graphBuilder.nestedGraphKeys)
             }
+            internalNavigator.deepLinkRegistry = deepLinkRegistry
             TraverseAnimatedHostCore(
                 backStack = backStack,
                 navigator = internalNavigator,
