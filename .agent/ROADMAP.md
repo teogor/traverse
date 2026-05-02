@@ -24,10 +24,10 @@
 *Goal: Build system in place, all modules compile an empty `commonMain` source set.*
 
 - [ ] `settings.gradle.kts` — multi-module project setup, version catalog
-- [ ] `gradle/libs.versions.toml` — all dependency versions (nav3, Compose, Kotlin, serialization…)
+- [ ] `gradle/libs.versions.toml` — all dependency versions (nav3 `1.0.0-alpha05` from `org.jetbrains.androidx.navigation3`, Compose, Kotlin, serialization…)
 - [ ] `build.gradle.kts` (root) — convention plugins applied
-- [ ] `traverse-core/build.gradle.kts` — KMP, no Compose dep
-- [ ] `traverse-compose/build.gradle.kts` — KMP, Compose, nav3
+- [ ] `traverse-core/build.gradle.kts` — KMP, no Compose dep, targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `wasmJs`
+- [ ] `traverse-compose/build.gradle.kts` — KMP, Compose, nav3, same targets
 - [ ] `traverse-test/build.gradle.kts` — KMP, test scope only
 - [ ] `demo/composeApp/build.gradle.kts` — application, depends on traverse-compose
 - [ ] `buildSrc/` or `build-logic/` — convention plugins
@@ -124,9 +124,9 @@
 
 ## Backlog (post-1.0)
 
-- [ ] WasmJs support (pending nav3 wasm stable)
 - [ ] `@Destination` annotation + KSP processor (optional, for projects that prefer codegen)
 - [ ] Navigation analytics plugin (intercept all nav events)
 - [ ] Shared-element transitions (nav3 dependent)
 - [ ] Compose Navigation testing integration
+- [ ] Web browser history integration (via `navigation3-browser` or native nav3 1.1.0)
 

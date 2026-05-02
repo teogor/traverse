@@ -23,55 +23,65 @@
 
 ---
 
-## 1. Foundation — `androidx.navigation3`
+## 1. Foundation — `androidx.navigation3` (JetBrains KMP fork)
 
-**Decision:** Build on `androidx.navigation3` (experimental as of May 2026), not nav2 (`navigation-compose` 2.x).
+**Decision:** Build on the JetBrains KMP fork of navigation3 (`org.jetbrains.androidx.navigation3`), version `1.0.0-alpha05`.
+
+**⚠️ Two nav3 implementations exist — use the JetBrains one:**
+- `androidx.navigation3:*` — Google original, Android only
+- `org.jetbrains.androidx.navigation3:*` — JetBrains KMP fork, supports Android + iOS + Desktop + **Web (wasmJs)** — USE THIS
 
 **Context:**
-- `navigation-compose` 2.x (JetBrains fork, currently at 2.9.1) is the current stable option but is a port of the Android-only nav2 API.
-- `androidx.navigation3` is Google's rewritten navigation library, announced at Google I/O 2025. It takes a radically different approach: the back stack is just a `MutableList<Any>`, and `NavDisplay` renders the current entry. This is far more composable and KMP-friendly.
+- nav2 (`navigation-compose` 2.x, JetBrains fork at 2.9.1) is the current stable opt but is in maintenance mode.
+- nav3 is fully KMP as of `1.0.0-alpha05` and supports all four platforms including wasmJs.
+- nav3 rewrites the back stack as a plain `SnapshotStateList<NavKey>` — no hidden registry, no `NavController`, trivially testable.
 
 **nav3 core concepts:**
 ```
-NavBackStack      — a MutableList<T> that IS the navigation state
-NavDisplay        — @Composable that renders the current NavEntry
-NavEntry<T>       — wraps a destination T with its content factory
-entryProvider { } — DSL to register nav entries by type
+NavKey              — marker interface; all destinations implement it
+NavBackStack        — a SnapshotStateList<NavKey>; manipulating it IS navigation
+NavDisplay          — @Composable rendering the current NavEntry
+NavEntry<T>         — wraps a NavKey T with its content composable
+entryProvider { }   — DSL to register entries by reified type
+SavedStateConfiguration — serializer config required for non-JVM platforms
 ```
 
 **Why nav3 over nav2:**
-- nav3 treats the back stack as plain Kotlin data — trivially testable, serializable, saveable.
-- nav3 has no hidden registry — no route system to work around.
-- nav3 is designed for KMP from the start.
-- nav3 is where Google is investing; nav2 is in maintenance mode.
+- KMP-native including Web.
+- Back stack is plain Kotlin data — trivially serializable and testable.
+- `SavedStateConfiguration` + kotlinx.serialization handles all argument types without `NavType`.
+- Google is investing in nav3; nav2 is maintenance-only.
 
-**Risk:** nav3 is experimental. Mitigation: Traverse wraps it behind its own stable API, so Traverse callers are insulated from nav3 API churn.
+**Risk:** nav3 is still alpha. Mitigation: Traverse wraps it behind a stable public API — callers are insulated from nav3 internal churn.
 
 ---
 
 ## 2. Destination contract
 
-**Decision:** `Destination` is a plain `interface`. Concrete destinations are `@Serializable` data classes or data objects.
+**Decision:** `Destination` is `interface Destination : NavKey`. Concrete destinations are `@Serializable` data classes or data objects.
 
 ```kotlin
 // traverse-core
-public interface Destination
+public interface Destination : NavKey
 
 // Callers write:
 @Serializable data object Home : Destination
 @Serializable data class UserProfile(val userId: String) : Destination
 ```
 
-**Why not sealed class / sealed interface?**
-- Sealed types require all subclasses to be in the same compilation unit. Library callers cannot extend sealed types across modules.
-- An open `interface` lets every module define its own destinations without any coupling.
+**Why `interface Destination : NavKey` and not just `NavKey` directly?**
+- `NavKey` is nav3's internal marker — callers should code against Traverse's type, not nav3's.
+- Extending `NavKey` means `Destination` is directly usable in nav3's `NavDisplay`, `rememberNavBackStack`, and `entryProvider` without casting.
+- Keeping Traverse's own name (`Destination`) means if nav3 renames or restructures `NavKey`, Traverse callers are unaffected — only `traverse-compose` changes.
 
 **Why require `@Serializable`?**
-- nav3 supports serializable keys natively.
-- Serialization enables deep links, state restoration, and analytics without extra infrastructure.
-- kotlinx.serialization is already a KMP-standard dependency.
+- nav3's `rememberNavBackStack` needs explicit serializers for non-JVM platforms (iOS, Web). See `.agent/refs/nav3.md` → "SavedStateConfiguration".
+- `@Serializable` enables Traverse to auto-build the `SavedStateConfiguration` from DSL registrations using `inline reified` + `serializer<T>()`.
+- Not enforceable at compile time without KSP, but documented clearly and validated at runtime.
 
-**Enforcement:** The `TraverseGraphBuilder.screen<T : Destination>` bound ensures that only `Destination` implementations can be registered. `@Serializable` is not enforced at compile time (no way to do so without annotation processing) but is documented as required and validated at runtime when nav3 processes the entry.
+**Auto-built `SavedStateConfiguration`:** `TraverseGraphBuilder.screen<T>` is `inline reified` — Traverse collects `Pair(T::class, serializer<T>())` for every registered destination and builds the `SerializersModule` + `SavedStateConfiguration` internally. Callers never write serialization config for the simple (single-module, sealed or open) case.
+
+**Multi-module projects:** `TraverseHost` accepts an optional `serializersModule: SerializersModule?` parameter that is merged (`+`) with the auto-collected one. See `.agent/refs/nav3.md` → "Three Serialization Patterns".
 
 ---
 

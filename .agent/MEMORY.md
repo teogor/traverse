@@ -33,15 +33,13 @@
 
 **Traverse** is a **Kotlin Multiplatform navigation library** for Compose Multiplatform.
 
-It is the spiritual successor to [compose-destinations](https://github.com/raamcosta/compose-destinations), which is no longer maintained. Traverse is built on top of **`androidx.navigation3`** — Google's new experimental navigation API (announced I/O 2025) — and is designed to work on **Android, iOS, and Desktop (JVM)**.
-
-**WasmJs is explicitly out of scope until nav3 supports it.**
+It is the spiritual successor to [compose-destinations](https://github.com/raamcosta/compose-destinations), which is no longer maintained. Traverse is built on top of the **JetBrains KMP fork of androidx.navigation3** (`org.jetbrains.androidx.navigation3`, version `1.0.0-alpha05`) and targets **Android, iOS, Desktop (JVM), and Web (wasmJs)** — all four platforms.
 
 **Key differentiators vs compose-destinations:**
 - No annotation processing / KSP — zero codegen
-- KMP-first (Android + iOS + Desktop)
+- KMP-first (Android + iOS + Desktop + Web)
 - Built on nav3 (not the deprecated nav2)
-- Type-safe via `@Serializable` Kotlin data classes — no code generation needed
+- Type-safe via `@Serializable` + `NavKey` — no code generation needed
 
 **Author:** Teodor Grigor (`dev.teogor`)
 
@@ -53,12 +51,16 @@ It is the spiritual successor to [compose-destinations](https://github.com/raamc
 |---|---|
 | Language | Kotlin 2.x |
 | UI | Compose Multiplatform (JetBrains) |
-| Navigation base | `androidx.navigation3` (experimental, 1.x alpha) |
+| Navigation base | `org.jetbrains.androidx.navigation3:navigation3-ui` `1.0.0-alpha05` (JetBrains KMP fork — NOT Google's `androidx.navigation3`) |
 | Serialization | `kotlinx.serialization` |
 | Build | Gradle with `libs.versions.toml` version catalog |
-| KMP Targets | `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm` |
+| KMP Targets | `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `wasmJs` |
 
-**Important:** `androidx.navigation3` is a COMPLETELY DIFFERENT library from `navigation-compose 2.x`. Do NOT mix them up. nav3 uses `NavDisplay` + `NavBackStack`. nav2 uses `NavHost` + `NavController`.
+**Important — TWO nav3 implementations exist:**
+- `androidx.navigation3:*` — Google original, **Android-only** — DO NOT USE
+- `org.jetbrains.androidx.navigation3:*` — JetBrains KMP fork, **Android + iOS + Desktop + Web** ← USE THIS
+
+**Important:** nav3 destinations must implement `NavKey` (not just `Any`) for KMP serialization. Traverse's `Destination` interface extends `NavKey`. See `.agent/refs/nav3.md` for full details.
 
 ---
 
@@ -232,14 +234,17 @@ public data class TraverseTransitionSpec(
 
 ## Open Research Questions (resolve before implementing affected areas)
 
-> Full context for each question is in `.agent/refs/nav3.md` (marked with ⚠️ VERIFY).
+> Full context for each question is in `.agent/refs/nav3.md`.
 
-1. **nav3 exact artifact coordinates** — Confirm the Maven coordinates + version before writing build files. See `.agent/refs/nav3.md` → "Maven Coordinates". Check https://developer.android.com/jetpack/androidx/releases/navigation3.
-2. **nav3 nested back-stack API** — Two approaches exist (nested `NavDisplay` vs flat back stack). See `.agent/refs/nav3.md` → "Nested Navigation". Confirm which nav3 recommends before implementing `nested()`.
-3. **nav3 `bottomSheet`** — nav3 likely does NOT have a `bottomSheet` entry type. See `.agent/refs/nav3.md` → "Known Limitations". If absent, wrap `ModalBottomSheet` manually.
-4. **nav3 `dialog` entry** — Confirm if nav3 has a `dialog` entry type or if it must be wrapped manually.
-5. **`SavedStateHandle` on iOS/Desktop** — Not available. Use `TraverseResultStore` backed by `MutableSharedFlow`. See `.agent/refs/compose-destinations.md` → "Navigation results" for the consumer/producer pattern.
-6. **nav3 `NavOptions` equivalent** — nav2 had `NavOptionsBuilder` for `launchSingleTop`, `popUpTo`, `restoreState`. Confirm nav3's equivalent API.
+1. ✅ **nav3 exact artifact coordinates** — VERIFIED: `org.jetbrains.androidx.navigation3:navigation3-ui:1.0.0-alpha05`. See `.agent/refs/nav3.md` → "Maven Coordinates".
+2. ✅ **Platform support** — VERIFIED: Android + iOS + Desktop + **wasmJs** all supported as of `1.0.0-alpha05`. Include `wasmJs` in KMP targets.
+3. **`Destination` interface design** — Decide in Milestone 2: `typealias Destination = NavKey` vs `interface Destination : NavKey`. Recommendation: Option B (extend NavKey). See `.agent/ARCHITECTURE.md` → Section 2.
+4. **`SavedStateConfiguration` auto-generation** — Traverse must collect all `T::class + serializer<T>()` from DSL registrations and build `SavedStateConfiguration` internally. See `.agent/refs/nav3.md` → "SavedStateConfiguration".
+5. **Multi-module serialization** — `TraverseHost` needs optional `serializersModule: SerializersModule?` param. See `.agent/refs/nav3.md` → "Three Serialization Patterns".
+6. **nav3 nested back-stack API** — Not covered in JetBrains docs. Research KMP nav3 GitHub samples before implementing `nested()`. See `.agent/refs/nav3.md` → "Known Limitations".
+7. **nav3 `dialog` and `bottomSheet` entry types** — Likely absent — verify before implementing, then wrap `Dialog { }` / `ModalBottomSheet` if absent.
+8. **`SavedStateHandle` on iOS/Web** — Not available. Use `TraverseResultStore` backed by `MutableSharedFlow`. See `.agent/refs/compose-destinations.md` → "Navigation results".
+9. **nav3 `NavOptions` equivalent** — Confirm nav3's single-top/restore-state mechanism before implementing `navigate(destination, builder)` overload.
 
 ---
 
@@ -272,4 +277,3 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 - Root keeps only `README.md`, `CONTRIBUTING.md`, `LICENSE` (future), `.gitignore`.
 - Updated all cross-references to use `.agent/` paths.
 - Committed: `chore: move agent docs into .agent/ directory`.
-
