@@ -2,6 +2,7 @@ package dev.teogor.traverse.compose.backgesture
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.runtime.Composable
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Android implementation of [TraverseBackHandler].
@@ -14,9 +15,12 @@ import androidx.compose.runtime.Composable
  * - **Android < 14**: flow completes immediately; [onProgress] gets `0f` and [onSwipeEdge]
  *   gets `-1`; the gesture is treated as a regular back press.
  *
- * When the gesture is **cancelled** the coroutine is cancelled and [onBack] is never called;
- * [onProgress] is called with `0f` and [onSwipeEdge] with `-1` via `finally` to reset any
- * in-progress animation.
+ * Per the Android predictive-back-progress documentation:
+ * - On **commit** (flow completes): [onBack] is called; [onProgress]/[onSwipeEdge] reset to
+ *   `0f`/`-1` so there is no visual artifact as [AnimatedContent] takes over the exit transition.
+ * - On **cancel** (CancellationException): [onProgress] is reset to `0f` and [onSwipeEdge] to
+ *   `-1`. TraverseHost drives the stored value through `animateFloatAsState(spring(...))` so the
+ *   screen bounces back smoothly instead of snapping abruptly.
  */
 @Composable
 internal actual fun TraverseBackHandler(
@@ -33,11 +37,17 @@ internal actual fun TraverseBackHandler(
                 onProgress(event.progress)
             }
             // Flow completed normally → user committed the back gesture.
-            onBack()
-        } finally {
-            // Reset animation progress and edge regardless of completion or cancellation.
+            // Reset visual state before handing off to AnimatedContent exit transition.
             onProgress(0f)
             onSwipeEdge(-1)
+            onBack()
+        } catch (e: CancellationException) {
+            // Gesture was cancelled (user pulled finger back without completing).
+            // Reset progress — TraverseHost's animateFloatAsState(spring()) will animate
+            // the value smoothly back from wherever the gesture was back to 0f.
+            onProgress(0f)
+            onSwipeEdge(-1)
+            throw e  // must re-throw so the coroutine is properly cancelled
         }
     }
 }

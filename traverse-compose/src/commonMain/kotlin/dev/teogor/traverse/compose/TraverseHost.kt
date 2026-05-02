@@ -1,6 +1,10 @@
 package dev.teogor.traverse.compose
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -163,11 +167,22 @@ private fun TraverseAnimatedHostCore(
                 onBack = { navigator.navigateUp() },
             ),
     ) {
-        // Track the predictive-back swipe progress (0.0 → 1.0) so screens can animate.
-        // On non-Android platforms this value stays at 0f (onProgress is never called).
-        var backProgress by remember { mutableFloatStateOf(0f) }
+        // Raw gesture progress updated directly by PredictiveBackHandler each frame.
+        // On non-Android platforms this stays at 0f permanently.
+        var rawBackProgress by remember { mutableFloatStateOf(0f) }
         // Track the swipe edge: 0 = left, 1 = right, -1 = no active gesture.
         var backSwipeEdge by remember { mutableIntStateOf(-1) }
+
+        // Per the Android docs (predictive-back-progress):
+        //   - During the gesture: snap() so the animated value matches the touch position
+        //     on every frame — no perceptible lag.
+        //   - On cancel (rawBackProgress reset to 0f): spring() so the screen smoothly
+        //     bounces back to its original position instead of snapping abruptly.
+        val backProgress by animateFloatAsState(
+            targetValue = rawBackProgress,
+            animationSpec = if (rawBackProgress > 0f) snap() else spring(stiffness = Spring.StiffnessMediumLow),
+            label = "predictiveBackProgress",
+        )
 
         CompositionLocalProvider(
             LocalTraverseNavigator provides navigator,
@@ -178,7 +193,7 @@ private fun TraverseAnimatedHostCore(
             TraverseBackHandler(
                 enabled = navigator.canNavigateUp,
                 backStackSize = backStack.size,
-                onProgress = { backProgress = it },
+                onProgress = { rawBackProgress = it },
                 onSwipeEdge = { backSwipeEdge = it },
                 onBack = { navigator.navigateUp() },
             )
@@ -231,24 +246,29 @@ private fun TraverseAnimatedHostCore(
                     contentKey = { it },
                     label = "TraverseHost",
                 ) { dest ->
-                    // Apply the Material-You predictive-back shrink-and-round transform while a
-                    // gesture is in progress.  When backProgress == 0f the graphicsLayer is a
-                    // no-op so there is zero overhead on normal screen transitions.
+                    // Per android.com/develop/ui/compose/system/predictive-back-progress:
+                    // Read state in the composable scope — this guarantees recomposition
+                    // (and thus a graphicsLayer update) on every gesture frame.
+                    // Reading inside graphicsLayer { } runs at draw-time and is less reliable.
+                    val progress = LocalPredictiveBackProgress.current
+                    val edge = LocalPredictiveBackSwipeEdge.current
+
+                    // Material-You shrink-and-round transform.
+                    // scale 1.0 → 0.9, corners 0dp → 28dp, ±32dp directional shift.
+                    // When progress == 0f this is an exact no-op: no scale/translate/clip applied.
                     Box(
                         modifier = Modifier.graphicsLayer {
-                            if (backProgress > 0f) {
-                                val scale = lerp(1f, 0.9f, backProgress)
+                            if (progress > 0f) {
+                                val scale = lerp(1f, 0.9f, progress)
                                 scaleX = scale
                                 scaleY = scale
-                                // Shift slightly toward the swipe edge so the screen appears to
-                                // "lift" in the direction the user is dragging.
-                                translationX = when (backSwipeEdge) {
-                                    0 -> lerp(0f, 32.dp.toPx(), backProgress)  // left edge → shift right
-                                    1 -> lerp(0f, -32.dp.toPx(), backProgress) // right edge → shift left
+                                translationX = when (edge) {
+                                    0 -> lerp(0f, 32.dp.toPx(), progress)  // left edge → shift right
+                                    1 -> lerp(0f, -32.dp.toPx(), progress) // right edge → shift left
                                     else -> 0f
                                 }
                                 clip = true
-                                shape = RoundedCornerShape(lerp(0f, 28f, backProgress).dp)
+                                shape = RoundedCornerShape(lerp(0f, 28f, progress).dp)
                             }
                         },
                     ) {
