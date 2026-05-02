@@ -11,17 +11,22 @@ import androidx.compose.runtime.Composable
  *   flow completes immediately (no animation possible) and [onProgress] is called once with `0f`.
  * - **iOS**: no-op (Compose iOS handles swipe-back natively via UINavigationController).
  * - **Desktop (JVM)**: no-op in alpha — keyboard shortcut support planned.
- * - **Web (wasmJs/JS)**: uses the browser `popstate` event; [onProgress] is never called.
+ * - **Web (wasmJs/JS)**: uses the browser `popstate` event. [backStackSize] is used as a key so
+ *   that a new `history.pushState()` entry is pushed for each Traverse navigation, keeping the
+ *   browser history depth in sync with the Traverse back stack depth.
  *
- * @param enabled    Whether back navigation is currently possible.
- * @param onProgress Called (0.0 → 1.0) while a predictive back swipe is in progress.
- *                   Called with `0f` when the gesture ends (committed or cancelled).
- *                   Non-Android platforms always ignore this callback.
- * @param onBack     Called when the back action is confirmed.
+ * @param enabled       Whether back navigation is currently possible.
+ * @param backStackSize Current Traverse back-stack depth. Used by browser targets to push one
+ *                      browser history entry per Traverse navigation.
+ * @param onProgress    Called (0.0 → 1.0) while a predictive back swipe is in progress.
+ *                      Called with `0f` when the gesture ends (committed or cancelled).
+ *                      Non-Android platforms always ignore this callback.
+ * @param onBack        Called when the back action is confirmed.
  */
 @Composable
 internal expect fun TraverseBackHandler(
     enabled: Boolean,
+    backStackSize: Int,
     onProgress: (Float) -> Unit,
     onBack: () -> Unit,
 )

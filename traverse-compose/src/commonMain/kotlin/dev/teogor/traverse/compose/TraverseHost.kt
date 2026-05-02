@@ -88,6 +88,7 @@ public fun TraverseHost(
             CompositionLocalProvider(LocalTraverseNavigator provides navigator) {
                 TraverseBackHandler(
                     enabled = navigator.canNavigateUp,
+                    backStackSize = navigator.backStack.size,
                     onProgress = {},        // no animation in test/preview mode
                     onBack = { navigator.navigateUp() },
                 )
@@ -151,6 +152,7 @@ private fun TraverseAnimatedHostCore(
             // Android back-handler (no-op on other platforms — key modifier handles those).
             TraverseBackHandler(
                 enabled = navigator.canNavigateUp,
+                backStackSize = backStack.size,
                 onProgress = { backProgress = it },
                 onBack = { navigator.navigateUp() },
             )

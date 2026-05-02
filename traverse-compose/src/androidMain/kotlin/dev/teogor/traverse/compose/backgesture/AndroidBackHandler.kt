@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 @Composable
 internal actual fun TraverseBackHandler(
     enabled: Boolean,
+    backStackSize: Int,       // not used by Android — PredictiveBackHandler handles all events
     onProgress: (Float) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -35,3 +36,4 @@ internal actual fun TraverseBackHandler(
         }
     }
 }
+
