@@ -45,6 +45,7 @@ private val FEATURES = listOf(
     FeatureEntry("🔗", "Deep Links", "Navigate to destinations via URI patterns on any platform.", "deepLink()"),
     FeatureEntry("🎬", "Transitions", "Explore built-in animation presets and define your own.", "TraverseTransitionSpec"),
     FeatureEntry("🏷️", "Annotations + KSP", "Declare screens with @TraverseScreen, @DeepLink, @Transition — KSP generates typed helpers.", "@TraverseScreen"),
+    FeatureEntry("🗂️", "Screen Registry", "Live ScreenRegistry browser — filter by group/type, search, inspect deep links.", "ScreenRegistry"),
 )
 
 /**
@@ -65,9 +66,11 @@ fun CatalogScreen(
     onDeepLinks: () -> Unit,
     onAnimations: () -> Unit,
     onAnnotations: () -> Unit,
+    onScreenRegistry: () -> Unit,
 ) {
     val callbacks = listOf(
-        onNestedGraph, onTypedArgs, onResults, onDialog, onSheet, onStackControl, onSingleTop, onDeepLinks, onAnimations, onAnnotations,
+        onNestedGraph, onTypedArgs, onResults, onDialog, onSheet,
+        onStackControl, onSingleTop, onDeepLinks, onAnimations, onAnnotations, onScreenRegistry,
     )
 
     Scaffold(

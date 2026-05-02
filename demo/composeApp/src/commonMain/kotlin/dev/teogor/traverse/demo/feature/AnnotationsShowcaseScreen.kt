@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -117,11 +118,13 @@ val deepLinkTargets = ScreenRegistry.all
  *
  * @param onNavigateToItemDetail Navigate to a sample annotated destination using the
  *   KSP-generated `navigateToAnnotationItemDetail(itemId)` extension.
+ * @param onBrowseRegistry Navigate to the live [ScreenRegistry] browser.
  * @param onNavigateUp Navigate back.
  */
 @Composable
 fun AnnotationsShowcaseScreen(
     onNavigateToItemDetail: (String) -> Unit,
+    onBrowseRegistry: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     ShowcaseScaffold(
@@ -148,9 +151,9 @@ fun AnnotationsShowcaseScreen(
                 )
             }
 
-            // ── Live registry query ────────────────────────────────────────────
+            // ── Live registry summary + Browse button ──────────────────────────
             item {
-                ScreenRegistrySummaryCard()
+                ScreenRegistrySummaryCard(onBrowseRegistry = onBrowseRegistry)
             }
 
             // ── "Try it" live example ──────────────────────────────────────────
@@ -183,7 +186,7 @@ private fun InfoBanner(text: String) {
 }
 
 @Composable
-private fun ScreenRegistrySummaryCard() {
+private fun ScreenRegistrySummaryCard(onBrowseRegistry: () -> Unit) {
     val allEntries = ScreenRegistry.all
     val screenCount = ScreenRegistry.screens.size
     val dialogCount = ScreenRegistry.dialogs.size
@@ -194,7 +197,7 @@ private fun ScreenRegistrySummaryCard() {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 "ScreenRegistry — live data",
                 style = MaterialTheme.typography.titleSmall,
@@ -202,22 +205,29 @@ private fun ScreenRegistrySummaryCard() {
             )
             Text(
                 text = if (allEntries.isEmpty()) {
-                    "Registry is empty. Call initTraverseScreenRegistry() at startup to auto-populate it."
+                    "Registry is empty — initTraverseScreenRegistry() was not called yet."
                 } else {
-                    "$screenCount screens · $dialogCount dialogs · $sheetCount sheets · $deepLinkCount with deep links\n" +
-                        "${allEntries.size} total entries registered"
+                    "${allEntries.size} destinations registered:\n" +
+                        "  🖥 $screenCount screens · 💬 $dialogCount dialogs · 📋 $sheetCount sheets · 🔗 $deepLinkCount with deep links"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             if (allEntries.isNotEmpty()) {
-                Spacer(Modifier.height(4.dp))
                 Text(
                     text = "Groups: " + allEntries.mapNotNull { it.group.takeIf { g -> g.isNotBlank() } }
-                        .distinct().joinToString(", "),
+                        .distinct().sorted().joinToString(", "),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
+                Spacer(Modifier.height(4.dp))
+                // Primary CTA: open the live registry browser
+                Button(
+                    onClick = onBrowseRegistry,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Browse Registry →  (${allEntries.size} destinations)")
+                }
             }
         }
     }

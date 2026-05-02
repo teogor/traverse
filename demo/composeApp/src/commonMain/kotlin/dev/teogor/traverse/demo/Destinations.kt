@@ -197,6 +197,16 @@ import kotlinx.serialization.Serializable
 @Transition(TransitionPreset.SLIDE_AND_FADE)
 @Serializable data object AnnotationsDemo : Destination
 
+/** Interactive ScreenRegistry browser — filter, search, and inspect all registered destinations. */
+@TraverseScreen
+@ScreenMeta(
+    name = "Screen Registry",
+    description = "Live view of ScreenRegistry: filter by group, type, search by name — all 30 destinations visible.",
+    group = "annotations",
+)
+@Transition(TransitionPreset.SLIDE_AND_FADE)
+@Serializable data object ScreenRegistryDemo : Destination
+
 /** A sample KSP-annotated destination used as a live example inside the Annotations Demo. */
 @TraverseScreen
 @DeepLink("traverse://demo/annotations/item/{itemId}")

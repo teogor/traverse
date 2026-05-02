@@ -19,6 +19,7 @@ import dev.teogor.traverse.demo.feature.AnimationPreviewScreen
 import dev.teogor.traverse.demo.feature.AnimationShowcaseScreen
 import dev.teogor.traverse.demo.feature.AnnotationItemDetailScreen
 import dev.teogor.traverse.demo.feature.AnnotationsShowcaseScreen
+import dev.teogor.traverse.demo.feature.ScreenRegistryDemoScreen
 import dev.teogor.traverse.demo.feature.ColorPickerScreen
 import dev.teogor.traverse.demo.feature.DeepLinkDemoScreen
 import dev.teogor.traverse.demo.feature.DeepLinkTargetScreen
@@ -85,6 +86,7 @@ fun App(
                     onDeepLinks = { nav.navigate(DeepLinkDemo) },
                     onAnimations = { nav.navigate(AnimationShowcase) },
                     onAnnotations = { nav.navigate(AnnotationsDemo) },
+                    onScreenRegistry = { nav.navigate(ScreenRegistryDemo) },
                 )
             }
 
@@ -361,6 +363,7 @@ fun App(
                 val nav = LocalTraverseNavigator.current
                 AnnotationsShowcaseScreen(
                     onNavigateToItemDetail = { itemId -> nav.navigate(AnnotationItemDetail(itemId)) },
+                    onBrowseRegistry = { nav.navigate(ScreenRegistryDemo) },
                     onNavigateUp = { nav.navigateUp() },
                 )
             }
@@ -373,6 +376,12 @@ fun App(
                 val nav = LocalTraverseNavigator.current
                 AnnotationItemDetailScreen(
                     itemId = dest.itemId,
+                    onNavigateUp = { nav.navigateUp() },
+                )
+            }
+            screen<ScreenRegistryDemo>(transitionSpec = TraverseTransitionSpec.slideAndFade()) {
+                val nav = LocalTraverseNavigator.current
+                ScreenRegistryDemoScreen(
                     onNavigateUp = { nav.navigateUp() },
                 )
             }
