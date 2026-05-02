@@ -78,7 +78,7 @@ nav3 (`org.jetbrains.androidx.navigation3`) is used as **reference only** (API d
 | Transitions | Compose `AnimatedContent` with `TraverseTransitionSpec` |
 | Serialization | `kotlinx.serialization` (for `@Serializable` Destination types) |
 | Build | Gradle with `libs.versions.toml` version catalog |
-| KMP Targets | `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `wasmJs` |
+| KMP Targets | `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `js`, `wasmJs` |
 
 **nav3 status:**
 - `androidx.navigation3:*` — Google original, Android-only — **reference only, NOT a dependency**
@@ -364,7 +364,15 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 10 (current)
+### 2026-05-02 — Session 11 (current)
+- **Fixed `js` platform build failure:**
+  - Root cause: `TraverseKmpLibraryPlugin` targeted `android, ios, jvm, wasmJs` but NOT `js`. The demo app's `commonMain` depends on both libraries and has `js` target → KMP dependency resolution failure on `js`.
+  - Fixed `TraverseKmpLibraryPlugin.kt`: added `js { browser() }` target
+  - Created `traverse-compose/src/jsMain/.../JsBackHandler.kt`: no-op `actual fun TraverseBackHandler` (same pattern as wasmJs/ios/jvm)
+  - **BUILD SUCCESSFUL** ✅ across all 6 platforms: android + ios + jvm + js + wasmJs for both libraries and demo
+- **Re: JetBrains docs** (`https://kotlinlang.org/docs/multiplatform/compose-navigation-3.html`): Cannot browse directly, but based on artifact inspection, that page covers `org.jetbrains.androidx.navigation3:navigation3-ui:1.0.0-alpha05` — which IS KMP (verified: has ios/desktop/js/wasmJs platform artifacts). Our decision to NOT use it as a runtime dep stands (we build our own AnimatedContent-based engine). That decision remains correct.
+
+### 2026-05-02 — Session 10
 - **Architectural change — removed nav3 as runtime dependency from `traverse-compose`:**
   - User requested switching to "JetBrains navigation library built on top of nav3" and clarified intent as "don't depend on nav3-ui for now, replicate it ourselves later"
   - **Verified:** `org.jetbrains.androidx.navigation3:navigation3-ui:1.0.0-alpha05` IS KMP — has iOS, desktop, wasmJs platform artifacts with `commonMain` sources. User's assumption that it "is not KMP" was incorrect. But the decision to not depend on it is correct for library stability.

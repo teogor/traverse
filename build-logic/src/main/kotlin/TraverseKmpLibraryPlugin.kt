@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
  *  - `com.android.library`
  *
  * Configures:
- *  - KMP targets: androidTarget (JVM 11), iosArm64, iosSimulatorArm64, jvm (JVM 11), wasmJs
+ *  - KMP targets: androidTarget (JVM 11), iosArm64, iosSimulatorArm64, jvm (JVM 11), js (browser), wasmJs (browser)
  *  - `explicitApi()` — every public declaration needs the `public` modifier
  *  - `commonTest` → `kotlin("test")` dependency
  *  - Android: compileSdk, minSdk, Java 11 compile options (sourced from version catalog)
@@ -52,6 +52,10 @@ class TraverseKmpLibraryPlugin : Plugin<Project> {
                 compilerOptions {
                     jvmTarget.set(JvmTarget.JVM_11)
                 }
+            }
+
+            js {
+                browser()
             }
 
             @OptIn(ExperimentalWasmDsl::class)
