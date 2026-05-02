@@ -1,8 +1,10 @@
 # Traverse — Architecture
 
-> This document records all architectural decisions made for the Traverse library.
+> This document lives in `.agent/ARCHITECTURE.md`.
+> It records all architectural decisions made for the Traverse library.
 > Each decision includes context, options considered, and the rationale for the choice made.
 > **Update this file whenever a significant design decision is made or revised.**
+> Cross-reference `.agent/MEMORY.md` and `.agent/ROADMAP.md` for current implementation status.
 
 ---
 

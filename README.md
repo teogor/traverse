@@ -177,6 +177,18 @@ screen<Settings>(
 
 ---
 
+## Documentation
+
+| Document | Location | Audience |
+|---|---|---|
+| Library overview (this file) | `README.md` | Everyone |
+| Contribution guide | `CONTRIBUTING.md` | Human contributors |
+| Architecture decisions | `.agent/ARCHITECTURE.md` | Contributors + AI agent |
+| Feature roadmap | `.agent/ROADMAP.md` | Contributors + AI agent |
+| Agent working memory | `.agent/MEMORY.md` | AI agent only |
+
+---
+
 ## License
 
 ```
@@ -194,4 +206,5 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
 

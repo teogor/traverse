@@ -9,6 +9,10 @@ This document covers the project structure, coding conventions, and the process 
 
 ```
 traverse/
+├── .agent/
+│   ├── MEMORY.md           # Agent working memory — read/update each session
+│   ├── ARCHITECTURE.md     # All design decisions
+│   └── ROADMAP.md          # Feature roadmap with per-item checkboxes
 ├── traverse-core/          # Destination, TraverseNavigator, results — no Compose dep
 ├── traverse-compose/       # TraverseHost, DSL builder, LocalTraverseNavigator, transitions
 ├── traverse-test/          # FakeTraverseNavigator, assertion helpers
@@ -17,9 +21,8 @@ traverse/
 ├── build-logic/            # Convention Gradle plugins
 ├── gradle/
 │   └── libs.versions.toml  # Single version catalog for all deps
-├── ARCHITECTURE.md         # All design decisions
-├── ROADMAP.md              # Feature roadmap
-└── TRAVERSE_MEMORY.md      # Agent working memory
+├── README.md               # Library overview
+└── CONTRIBUTING.md         # This file
 ```
 
 ---
@@ -115,8 +118,10 @@ test(compose): add TraverseHost integration test for dialog destinations
 
 1. Create a feature branch from `main`.
 2. Make your changes — ensure `./gradlew test` passes.
-3. Update `ARCHITECTURE.md` if you made an architectural decision.
-4. Update `ROADMAP.md` — check off completed items, add new ones.
+3. Update `.agent/ARCHITECTURE.md` if you made an architectural decision.
+4. Update `.agent/ROADMAP.md` — check off completed items, add new ones.
 5. Add KDoc to all new public API.
 6. Open a PR with a clear description referencing the roadmap item.
+
+
 

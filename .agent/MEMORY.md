@@ -13,9 +13,18 @@
 >
 > Branch: `main` (commit directly to main until the project reaches beta)
 
----
+## .agent/ Directory Layout
 
-## What is Traverse?
+```
+.agent/
+├── MEMORY.md        ← this file — read first, update after every task
+├── ARCHITECTURE.md  ← all design decisions — update when decisions change
+└── ROADMAP.md       ← milestones and per-item checklist — tick off as you go
+```
+
+These three files are the agent's source of truth. Root-level `README.md` and `CONTRIBUTING.md` are for human readers and stay in sync with decisions recorded here.
+
+---
 
 **Traverse** is a **Kotlin Multiplatform navigation library** for Compose Multiplatform.
 
@@ -250,6 +259,9 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ### 2026-05-02 — Session 1 (by previous agent from armature project)
 - Created the git repo at `/Users/teodor.grigor/Teogor/traverse`.
-- Created all documentation and memory files: `.gitignore`, `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `CONTRIBUTING.md`, `TRAVERSE_MEMORY.md`.
-- Made initial commit: `chore: initial scaffold — docs and memory file`.
+- Created all documentation and memory files.
+- Moved agent files into `.agent/` directory: `MEMORY.md`, `ARCHITECTURE.md`, `ROADMAP.md`.
+- Root keeps only `README.md`, `CONTRIBUTING.md`, `LICENSE` (future), `.gitignore`.
+- Updated all cross-references to use `.agent/` paths.
+- Committed: `chore: move agent docs into .agent/ directory`.
 

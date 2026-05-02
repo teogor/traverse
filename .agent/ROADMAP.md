@@ -1,7 +1,9 @@
 # Traverse — Roadmap
 
+> This document lives in `.agent/ROADMAP.md`.
 > Tracks feature priorities and release milestones.
 > **Update this after each session. Mark items ✅ when done, ⚠️ when blocked.**
+> Cross-reference `.agent/MEMORY.md` for current agent session context.
 
 ---
 
