@@ -119,12 +119,16 @@ private fun TraverseAnimatedHost(
             }
         }
 
-        // Render dialog / bottom sheet overlays above AnimatedContent
-        if (isOverlay && topSpec != null) {
-            when (topSpec.type) {
+        // Render dialog / bottom sheet overlays above AnimatedContent.
+        // takeIf bridges the nullable topSpec to the non-nullable overlay branch:
+        // isOverlay is only true when topSpec?.type was DIALOG or BOTTOM_SHEET, so
+        // topSpec is guaranteed non-null here — takeIf makes the smart-cast explicit.
+        val overlaySpec = topSpec.takeIf { isOverlay }
+        if (overlaySpec != null) {
+            when (overlaySpec.type) {
                 EntryType.DIALOG -> {
                     Dialog(onDismissRequest = { navigator.navigateUp() }) {
-                        topSpec.content(topDest)
+                        overlaySpec.content(topDest)
                     }
                 }
                 EntryType.BOTTOM_SHEET -> {
@@ -133,10 +137,10 @@ private fun TraverseAnimatedHost(
                         onDismissRequest = { navigator.navigateUp() },
                         sheetState = sheetState,
                     ) {
-                        topSpec.content(topDest)
+                        overlaySpec.content(topDest)
                     }
                 }
-                EntryType.SCREEN -> Unit // never reached when isOverlay is true
+                EntryType.SCREEN -> Unit // unreachable: isOverlay is false for SCREEN
             }
         }
     }

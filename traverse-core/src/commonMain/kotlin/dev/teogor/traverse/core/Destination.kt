@@ -4,8 +4,9 @@ package dev.teogor.traverse.core
  * Marker interface for all navigation destinations in Traverse.
  *
  * `Destination` is intentionally a plain Kotlin interface with **no framework dependencies**.
- * It does not extend nav3's `NavKey` — the mapping is handled internally by `traverse-compose`
- * so that `traverse-core` (and therefore `traverse-test`) remain completely framework-free.
+ * It does not extend any external navigation type — `traverse-core` has zero framework
+ * dependencies, making it fully portable across all platforms and independently testable.
+ * `traverse-compose` builds on top of `Destination` without leaking any internal types.
  *
  * ## Requirements
  *

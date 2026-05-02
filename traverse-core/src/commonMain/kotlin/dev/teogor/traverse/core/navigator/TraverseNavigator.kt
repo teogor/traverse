@@ -18,7 +18,8 @@ import kotlinx.coroutines.flow.Flow
  * ```
  *
  * ## Implementations
- * - **Production:** `DefaultTraverseNavigator` in `traverse-compose` — backed by nav3's `NavBackStack`.
+ * - **Production:** `DefaultTraverseNavigator` in `traverse-compose` — backed by a
+ *   [SnapshotStateList][androidx.compose.runtime.snapshots.SnapshotStateList]`<Destination>`.
  * - **Tests:** `FakeTraverseNavigator` in `traverse-test` — records all calls for assertion.
  */
 public interface TraverseNavigator {

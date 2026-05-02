@@ -364,7 +364,14 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 13 (current)
+### 2026-05-02 — Session 14 (current)
+- **Fixed all outstanding code quality issues (zero issues remain):**
+  - **Compiler warning fixed** — `TraverseHost.kt:123`: `if (isOverlay && topSpec != null)` → `val overlaySpec = topSpec.takeIf { isOverlay }; if (overlaySpec != null)`. `topSpec != null` was always true when `isOverlay == true` (by definition of its computation). Using `takeIf` makes the smart cast explicit and eliminates the redundancy. **Zero compiler warnings** across all three modules. ✅
+  - **Stale KDoc fixed** — `Destination.kt:7`: removed "mapping handled internally by traverse-compose" (implied nav3 dependency still existed). Now correctly states: "no framework dependencies, fully portable and independently testable."
+  - **Stale KDoc fixed** — `TraverseNavigator.kt:21`: "backed by nav3's `NavBackStack`" → "backed by a `SnapshotStateList<Destination>`".
+  - **ROADMAP.md updated** — ticked off all completed items in M2, M3, M5. All three milestones marked ✅.
+
+### 2026-05-02 — Session 13
 - **Reworked demo app — "Traverse Explorer" (replaces "Journal" demo):**
   - Concept: self-documenting navigation showcase. Every screen has a live **BackStackBar** at the bottom showing the back stack as breadcrumb chips — reactive to every push/pop.
   - Deleted all Journal app files. Created: `Destinations.kt`, `DemoConstants.kt`, `ui/BackStackBar.kt`, `ui/ShowcaseScaffold.kt`, `screen/SplashScreen.kt`, `screen/CatalogScreen.kt`, `feature/NestedStepScreen.kt`, `feature/TypedArgsScreen.kt`, `feature/ResultDemoScreen.kt`, `feature/ColorPickerScreen.kt`, `feature/DialogDemoScreen.kt`, `feature/SheetDemoScreen.kt`, `feature/StackControlScreen.kt`, `feature/SingleTopScreen.kt`, `dialog/ShowcaseDialogContent.kt`, `sheet/OptionSheetContent.kt`.

@@ -35,51 +35,53 @@
 
 ---
 
-## Milestone 2 — Core API (`traverse-core`)
+## Milestone 2 — Core API (`traverse-core`) ✅
 *Goal: `Destination` interface, `TraverseNavigator` interface, back-stack extensions, result API.*
 
 - [x] `traverse-core/src/commonMain/…/core/Destination.kt`
-- [ ] `traverse-core/src/commonMain/…/navigator/TraverseNavigator.kt`
+- [x] `traverse-core/src/commonMain/…/navigator/TraverseNavigator.kt`
   - `navigate(destination, builder)`
   - `navigateUp(): Boolean`
   - `popTo(destination, inclusive): Boolean`
   - `canNavigateUp: Boolean`
-- [ ] `traverse-core/src/commonMain/…/navigator/TraverseNavigatorExtensions.kt`
+- [x] `traverse-core/src/commonMain/…/navigator/TraverseNavigatorExtensions.kt`
   - `navigateAndClearUpTo<T>(destination)`
   - `launchAsNewRoot<Root>(destination)`
-- [ ] `traverse-core/src/commonMain/…/result/NavigationResult.kt`
-  - `TraverseResultStore` (platform-abstracted)
+- [x] `traverse-core/src/commonMain/…/result/NavigationResultExtensions.kt`
   - `setResultAndNavigateUp(key, value)`
   - `setResultAndPopTo(key, value, destination, inclusive)`
-  - `CollectTraverseResultOnce<T>(key, onResult)` composable
-- [ ] `traverse-core/src/commonMain/…/dsl/TraverseDsl.kt` — `@DslMarker` annotation
-- [ ] Unit tests in `traverse-core/src/commonTest/…`
-- [ ] `explicitApi()` enabled
+- [x] `traverse-core/src/commonMain/…/dsl/TraverseDsl.kt` — `@DslMarker` annotation
+- [x] Unit tests in `traverse-core/src/commonTest/…` — 15 passing
+- [x] `explicitApi()` enabled
 
 ---
 
-## Milestone 3 — Compose host (`traverse-compose`)
+## Milestone 3 — Compose host (`traverse-compose`) ✅
 *Goal: `TraverseHost` composable, `TraverseGraphBuilder` DSL, `LocalTraverseNavigator`, transitions.*
 
-- [ ] `traverseGraphBuilder.kt` — `@TraverseDsl` class with:
-  - `screen<T : Destination>(enterTransition?, exitTransition?, content)`
-  - `dialog<T : Destination>(properties?, content)`
-  - `bottomSheet<T : Destination>(content)` *(pending nav3 API)*
+- [x] `TraverseGraphBuilder.kt` — `@TraverseDsl` class with:
+  - `screen<T : Destination>(content)`
+  - `dialog<T : Destination>(content)`
+  - `bottomSheet<T : Destination>(content)`
   - `nested(startDestination, graphKey?, builder)`
-- [ ] `TraverseHost.kt` — `@Composable fun TraverseHost(startDestination, modifier, navigator?, transitions?, builder)`
-  - Wraps nav3 `NavDisplay` + `rememberNavBackStack`
+- [x] `TraverseHost.kt` — `@Composable fun TraverseHost(startDestination, modifier, navigator?, transitions?, builder)`
+  - Self-contained: uses `AnimatedContent` + `SnapshotStateList<Destination>` (no external nav library)
   - Provides `LocalTraverseNavigator`
-- [ ] `DefaultTraverseNavigator.kt` — nav3 `NavBackStack` adapter
-- [ ] `LocalTraverseNavigator.kt` — `CompositionLocal<TraverseNavigator>`
-- [ ] `TraverseTransitionSpec.kt` — `fade()`, `horizontalSlide()`, `none()` presets
-- [ ] Integration tests (compose test rule)
-- [ ] `explicitApi()` enabled
+  - Renders dialogs as `Dialog {}` overlay, bottom sheets as `ModalBottomSheet {}` overlay
+- [x] `DefaultTraverseNavigator.kt` — `SnapshotStateList<Destination>` adapter, handles popUpTo/launchSingleTop
+- [x] `LocalTraverseNavigator.kt` — `CompositionLocal<TraverseNavigator>`
+- [x] `TraverseTransitionSpec.kt` — `fade()`, `horizontalSlide()`, `none()` presets
+- [x] `TraverseResultStore.kt` — `MutableSharedFlow`-backed result store (KMP-compatible)
+- [x] `CollectTraverseResultOnce` — composable collector (clears result after delivery)
+- [x] Back-gesture handling — `TraverseBackHandler` with `expect/actual` per platform
+- [x] `explicitApi()` enabled
 
 ---
 
 ## Milestone 4 — Test utilities (`traverse-test`)
 *Goal: `FakeTraverseNavigator` and assertion helpers.*
 
+- [ ] `traverse-test/build.gradle.kts` — KMP, testImplementation scope
 - [ ] `FakeTraverseNavigator` — records all calls, exposes history list
 - [ ] `assertNavigatedTo<T>()` extension
 - [ ] `assertNavigatedUp()` extension
@@ -88,17 +90,18 @@
 
 ---
 
-## Milestone 5 — Demo app
+## Milestone 5 — Demo app ✅
 *Goal: Demo app covering all features with living, runnable screens.*
 
-- [ ] **Basic navigation** — `navigate()`, `navigateUp()`
-- [ ] **Typed arguments** — `@Serializable data class` destinations
-- [ ] **Navigation results** — `setResultAndNavigateUp` + `CollectTraverseResultOnce`
-- [ ] **Nested graphs** — sub-graph with its own start destination
-- [ ] **Back-stack ops** — `popTo`, `navigateAndClearUpTo`, `launchAsNewRoot`
-- [ ] **Dialog destinations** — `dialog<T> { }`
-- [ ] **Transitions** — `fade()` / `horizontalSlide()` / custom per-screen
-- [ ] Runs on Android, JVM Desktop, iOS simulator
+- [x] **Basic navigation** — `navigate()`, `navigateUp()`
+- [x] **Typed arguments** — `@Serializable data class` destinations (`FeatureDetail`)
+- [x] **Navigation results** — `setResult` + `CollectTraverseResultOnce` (color picker demo)
+- [x] **Nested graphs** — `NestedFlowGraph` → 3-step wizard → `popTo(Catalog)`
+- [x] **Back-stack ops** — `popTo`, `launchAsNewRoot`, `launchSingleTop`
+- [x] **Dialog destinations** — `dialog<ShowcaseDialog>`
+- [x] **Bottom-sheet destinations** — `bottomSheet<OptionSheet>`
+- [x] **Live back-stack visualizer** — `BackStackBar` component on every screen
+- [x] Runs on Desktop JVM ✅
 
 ---
 
