@@ -240,9 +240,10 @@ public data class TraverseTransitionSpec(
 | `CONTRIBUTING.md` | ✅ |
 | `MEMORY.md` | ✅ (this file) |
 | Gradle skeleton (settings, build, libs.versions.toml) | ✅ |
-| `demo/composeApp` (KMP Jetbrains default demo) | ✅ |
+| `demo/composeApp` (KMP JetBrains default demo) | ✅ |
 | `traverse-core` module skeleton (build.gradle.kts + Destination.kt) | ✅ |
 | `traverse-compose` module skeleton (build.gradle.kts) | ✅ |
+| `build-logic` convention plugins (Kotlin `Plugin<Project>` classes) | ✅ |
 | `traverse-core` first source files (Navigator, results, DSL) | ❌ TODO |
 | `traverse-compose` first source files (TraverseHost, etc.) | ❌ TODO |
 | `traverse-test` skeleton | ❌ TODO |
@@ -288,6 +289,34 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 ---
 
 ## Progress Log
+
+### 2026-05-02 — Session 6 (current)
+- Memory file was stale — updated to reflect all work done in sessions 4–5.
+- No new code changed in this session — memory sync + commit only.
+
+### 2026-05-02 — Session 5
+- Refactored build-logic: replaced precompiled `.gradle.kts` script plugins with Kotlin `Plugin<Project>` classes.
+  - Deleted: `traverse.kmp.library.gradle.kts`, `traverse.kmp.library.compose.gradle.kts`, `traverse.kmp.application.gradle.kts`
+  - Created: `TraverseKmpLibraryPlugin.kt` (id: `traverse.kmp.library`)
+  - Created: `TraverseComposePlugin.kt` (id: `traverse.compose`) — Compose-only, no KMP setup
+  - Created: `TraverseKmpApplicationPlugin.kt` (id: `traverse.kmp.application`)
+  - Updated `build-logic/build.gradle.kts`: added `gradlePlugin {}` block with all three plugin registrations.
+- Compose layer is now **standalone**: `traverse-compose` applies `traverse.kmp.library` + `traverse.compose` (previously one combined `traverse.kmp.library.compose`).
+- Demo applies `traverse.kmp.application` + `traverse.compose` + hotReload.
+- Committed: `refactor(build-logic): replace .gradle.kts scripts with Kotlin Plugin<Project> classes`.
+
+### 2026-05-02 — Session 4
+- Added `build-logic/` convention plugins (precompiled `.gradle.kts`, later replaced in session 5).
+  - `traverse.kmp.library` — KMP library baseline: android + iosArm64 + iosSimulatorArm64 + jvm + wasmJs targets, `explicitApi()`, Java 11, android compileSdk/minSdk.
+  - `traverse.kmp.library.compose` — extended library + Compose + Kotlin compose compiler.
+  - `traverse.kmp.application` — demo app: all targets + js + webMain, android targetSdk/packaging/buildTypes.
+  - `traverse-core`, `traverse-compose`, `demo/composeApp` build files slimmed down — convention plugins now handle the boilerplate.
+  - `libs.versions.toml`: added `android-gradle-plugin`, `jetbrains-kotlin-gradle-plugin`, `jetbrains-kotlin-compose-gradle-plugin`, `jetbrains-compose-gradle-plugin` (build-logic classpath only).
+  - Version catalog entries standardized to `author.library` naming (`jetbrains-*`, `android-*`).
+  - Android SDK version entries renamed: `android-sdk-compile`, `android-sdk-min`, `android-sdk-target`.
+  - Gradle daemon JVM toolchain configuration added.
+  - All packages aligned to `dev.teogor.traverse.*`.
+- Committed (multiple commits, see git log `6e097d8`–`fadd5c4`).
 
 ### 2026-05-02 — Session 2
 - Read all repo files: README.md, CONTRIBUTING.md, ARCHITECTURE.md, ROADMAP.md, MEMORY.md.

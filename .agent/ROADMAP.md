@@ -20,25 +20,25 @@
 
 ---
 
-## Milestone 1 — Gradle skeleton
+## Milestone 1 — Gradle skeleton ✅
 *Goal: Build system in place, all modules compile an empty `commonMain` source set.*
 
-- [ ] `settings.gradle.kts` — multi-module project setup, version catalog
-- [ ] `gradle/libs.versions.toml` — all dependency versions (nav3 `1.0.0-alpha05` from `org.jetbrains.androidx.navigation3`, Compose, Kotlin, serialization…)
-- [ ] `build.gradle.kts` (root) — convention plugins applied
-- [ ] `traverse-core/build.gradle.kts` — KMP, no Compose dep, targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `wasmJs`
-- [ ] `traverse-compose/build.gradle.kts` — KMP, Compose, nav3, same targets
+- [x] `settings.gradle.kts` — multi-module project setup, version catalog
+- [x] `gradle/libs.versions.toml` — all dependency versions (nav3 `1.0.0-alpha05` from `org.jetbrains.androidx.navigation3`, Compose, Kotlin, serialization…)
+- [x] `build.gradle.kts` (root) — convention plugins applied
+- [x] `traverse-core/build.gradle.kts` — KMP, no Compose dep, targets: `androidTarget`, `iosArm64`, `iosSimulatorArm64`, `jvm`, `wasmJs`
+- [x] `traverse-compose/build.gradle.kts` — KMP, Compose, nav3, same targets
 - [ ] `traverse-test/build.gradle.kts` — KMP, test scope only
-- [ ] `demo/composeApp/build.gradle.kts` — application, depends on traverse-compose
-- [ ] `buildSrc/` or `build-logic/` — convention plugins
-- [ ] All modules compile: `./gradlew :traverse-core:compileKotlinJvm` ✅
+- [x] `demo/composeApp/build.gradle.kts` — application, depends on traverse-compose
+- [x] `build-logic/` — convention plugins (`TraverseKmpLibraryPlugin`, `TraverseComposePlugin`, `TraverseKmpApplicationPlugin`)
+- [x] All modules compile: `./gradlew :traverse-core:compileKotlinJvm` ✅
 
 ---
 
 ## Milestone 2 — Core API (`traverse-core`)
 *Goal: `Destination` interface, `TraverseNavigator` interface, back-stack extensions, result API.*
 
-- [ ] `traverse-core/src/commonMain/…/core/Destination.kt`
+- [x] `traverse-core/src/commonMain/…/core/Destination.kt`
 - [ ] `traverse-core/src/commonMain/…/navigator/TraverseNavigator.kt`
   - `navigate(destination, builder)`
   - `navigateUp(): Boolean`
