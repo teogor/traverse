@@ -1,10 +1,12 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.jetbrains.kotlin.multiplatform)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.jetbrains.kotlin.serialization)
 }
+
 kotlin {
     explicitApi()
     androidTarget {
@@ -21,10 +23,10 @@ kotlin {
     }
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.jetbrains.kotlinx.serialization.core)
         }
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(libs.jetbrains.kotlin.test)
         }
     }
 }
