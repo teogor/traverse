@@ -17,6 +17,8 @@ import dev.teogor.traverse.core.navigator.launchAsNewRoot
 import dev.teogor.traverse.demo.dialog.ShowcaseDialogContent
 import dev.teogor.traverse.demo.feature.AnimationPreviewScreen
 import dev.teogor.traverse.demo.feature.AnimationShowcaseScreen
+import dev.teogor.traverse.demo.feature.AnnotationItemDetailScreen
+import dev.teogor.traverse.demo.feature.AnnotationsShowcaseScreen
 import dev.teogor.traverse.demo.feature.ColorPickerScreen
 import dev.teogor.traverse.demo.feature.DeepLinkDemoScreen
 import dev.teogor.traverse.demo.feature.DeepLinkTargetScreen
@@ -82,6 +84,7 @@ fun App(
                     onSingleTop = { nav.navigate(SingleTopDemo) },
                     onDeepLinks = { nav.navigate(DeepLinkDemo) },
                     onAnimations = { nav.navigate(AnimationShowcase) },
+                    onAnnotations = { nav.navigate(AnnotationsDemo) },
                 )
             }
 
@@ -270,9 +273,6 @@ fun App(
             }
 
             // ── Feature: Transitions ──────────────────────────────────────────
-            // AnimationShowcase is registered with the host's default horizontalSlide so
-            // it slides in naturally. Each preview destination is registered with its own
-            // transitionSpec so the selected animation plays when navigating to it and back.
             screen<AnimationShowcase> {
                 val nav = LocalTraverseNavigator.current
                 AnimationShowcaseScreen(
@@ -353,6 +353,27 @@ fun App(
                     pushDescription = "Instant cut — no enter animation whatsoever.",
                     popDescription = "Instant cut — no pop animation whatsoever.",
                     onBack = { nav.navigateUp() },
+                )
+            }
+
+            // ── Feature: Annotations + KSP ────────────────────────────────────
+            screen<AnnotationsDemo>(transitionSpec = TraverseTransitionSpec.slideAndFade()) {
+                val nav = LocalTraverseNavigator.current
+                AnnotationsShowcaseScreen(
+                    onNavigateToItemDetail = { itemId -> nav.navigate(AnnotationItemDetail(itemId)) },
+                    onNavigateUp = { nav.navigateUp() },
+                )
+            }
+            screen<AnnotationItemDetail>(
+                transitionSpec = TraverseTransitionSpec.slideAndFade(),
+                deepLinks = listOf(
+                    deepLink("traverse://demo/annotations/item/{itemId}"),
+                ),
+            ) { dest ->
+                val nav = LocalTraverseNavigator.current
+                AnnotationItemDetailScreen(
+                    itemId = dest.itemId,
+                    onNavigateUp = { nav.navigateUp() },
                 )
             }
         }
