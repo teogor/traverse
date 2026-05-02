@@ -364,7 +364,24 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 15 (current)
+### 2026-05-02 — Session 16 (current)
+- **Full audit: zero issues remaining.**
+  - Build: `BUILD SUCCESSFUL` — zero warnings, zero errors across all 3 modules.
+  - Tests: 44 passing total (15 traverse-core + 18 FakeTraverseNavigator + 11 TraverseAssertions).
+- **ARCHITECTURE.md fully rewritten** — removed all stale nav3 references throughout:
+  - Section 1: documents the nav3→self-contained pivot with rationale
+  - Section 3: corrects "nav3's NavBackStack" → "our own `SnapshotStateList<Destination>`"
+  - Section 4: corrects `backStack: NavBackStack<Destination>` → `List<Destination>`
+  - Sections 7, 9: remove nav3 NavDisplay references, describe actual flat-registry and AnimatedContent implementations
+  - Section 10: updated platform table (6 targets, all compiling)
+  - Open questions: marked resolved entries ✅, flagged 3 deferred items ⏳
+- **`docs/FEATURES.md` created** — comprehensive living feature map covering:
+  - 15 feature areas with ✅ Shipped / 📋 Planned / 💡 Ideas breakdown
+  - All current APIs documented with example code
+  - Future roadmap items with design sketches
+  - Summary table for at-a-glance status
+
+### 2026-05-02 — Session 15
 - **M4 complete — `traverse-test` module:**
   - Created `traverse-test/build.gradle.kts` — KMP library applying `traverse.kmp.library`, depends on `api(traverse-core)` + `implementation(kotlin("test"))` + `implementation(coroutines-core)`.
   - Added `:traverse-test` to `settings.gradle.kts`.
