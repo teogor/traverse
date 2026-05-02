@@ -21,12 +21,12 @@
 ├── ARCHITECTURE.md  ← all design decisions — update when decisions change
 ├── ROADMAP.md       ← milestones and per-item checklist — tick off as you go
 └── refs/
-    ├── nav3.md                  ← androidx.navigation3 full API reference + gotchas
+    ├── navigation-reference.md  ← full nav ecosystem reference: nav2, nav3-KMP, nav3-Android, migration, links
     └── compose-destinations.md  ← compose-destinations feature inventory; what to replicate/drop/improve
 ```
 
 **When to read refs:**
-- `refs/nav3.md` — BEFORE writing any code in `traverse-compose`. Contains the exact API, known limitations, and code examples.
+- `refs/navigation-reference.md` — BEFORE writing any code in `traverse-compose`. Contains the exact API, known limitations, and code examples.
 - `refs/compose-destinations.md` — when implementing a new feature; check what compose-destinations did and what the Traverse verdict is.
 
 ---
@@ -60,7 +60,7 @@ It is the spiritual successor to [compose-destinations](https://github.com/raamc
 - `androidx.navigation3:*` — Google original, **Android-only** — DO NOT USE
 - `org.jetbrains.androidx.navigation3:*` — JetBrains KMP fork, **Android + iOS + Desktop + Web** ← USE THIS
 
-**Important:** nav3 destinations must implement `NavKey` (not just `Any`) for KMP serialization. Traverse's `Destination` interface extends `NavKey`. See `.agent/refs/nav3.md` for full details.
+**Important:** nav3 destinations must implement `NavKey` (not just `Any`) for KMP serialization. Traverse's `Destination` interface extends `NavKey`. See `.agent/refs/navigation-reference.md` for full details.
 
 ---
 
@@ -234,14 +234,14 @@ public data class TraverseTransitionSpec(
 
 ## Open Research Questions (resolve before implementing affected areas)
 
-> Full context for each question is in `.agent/refs/nav3.md`.
+> Full context for each question is in `.agent/refs/navigation-reference.md`.
 
-1. ✅ **nav3 exact artifact coordinates** — VERIFIED: `org.jetbrains.androidx.navigation3:navigation3-ui:1.0.0-alpha05`. See `.agent/refs/nav3.md` → "Maven Coordinates".
+1. ✅ **nav3 exact artifact coordinates** — VERIFIED: `org.jetbrains.androidx.navigation3:navigation3-ui:1.0.0-alpha05`. See `.agent/refs/navigation-reference.md` → "Maven Coordinates".
 2. ✅ **Platform support** — VERIFIED: Android + iOS + Desktop + **wasmJs** all supported as of `1.0.0-alpha05`. Include `wasmJs` in KMP targets.
 3. **`Destination` interface design** — Decide in Milestone 2: `typealias Destination = NavKey` vs `interface Destination : NavKey`. Recommendation: Option B (extend NavKey). See `.agent/ARCHITECTURE.md` → Section 2.
-4. **`SavedStateConfiguration` auto-generation** — Traverse must collect all `T::class + serializer<T>()` from DSL registrations and build `SavedStateConfiguration` internally. See `.agent/refs/nav3.md` → "SavedStateConfiguration".
-5. **Multi-module serialization** — `TraverseHost` needs optional `serializersModule: SerializersModule?` param. See `.agent/refs/nav3.md` → "Three Serialization Patterns".
-6. **nav3 nested back-stack API** — Not covered in JetBrains docs. Research KMP nav3 GitHub samples before implementing `nested()`. See `.agent/refs/nav3.md` → "Known Limitations".
+4. **`SavedStateConfiguration` auto-generation** — Traverse must collect all `T::class + serializer<T>()` from DSL registrations and build `SavedStateConfiguration` internally. See `.agent/refs/navigation-reference.md` → "SavedStateConfiguration".
+5. **Multi-module serialization** — `TraverseHost` needs optional `serializersModule: SerializersModule?` param. See `.agent/refs/navigation-reference.md` → "Three Serialization Patterns".
+6. **nav3 nested back-stack API** — Not covered in JetBrains docs. Research KMP nav3 GitHub samples before implementing `nested()`. See `.agent/refs/navigation-reference.md` → "Known Limitations".
 7. **nav3 `dialog` and `bottomSheet` entry types** — Likely absent — verify before implementing, then wrap `Dialog { }` / `ModalBottomSheet` if absent.
 8. **`SavedStateHandle` on iOS/Web** — Not available. Use `TraverseResultStore` backed by `MutableSharedFlow`. See `.agent/refs/compose-destinations.md` → "Navigation results".
 9. **nav3 `NavOptions` equivalent** — Confirm nav3's single-top/restore-state mechanism before implementing `navigate(destination, builder)` overload.

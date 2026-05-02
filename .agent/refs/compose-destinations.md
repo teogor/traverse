@@ -150,7 +150,7 @@ TraverseHost {
 
 **Implementation notes:**
 - `nested()` creates a sub-scope of `TraverseGraphBuilder`.
-- Under the hood: either nested `NavDisplay` or flat back stack — see `.agent/refs/nav3.md` for the two approaches. Confirm with nav3 docs before implementing.
+- Under the hood: either nested `NavDisplay` or flat back stack — see `.agent/refs/navigation-reference.md` for the two approaches. Confirm with nav3 docs before implementing.
 
 ---
 
@@ -215,7 +215,7 @@ dialog<ConfirmDelete> { _, dest ->
 ```
 
 **Implementation notes:**
-- nav3 may have a `dialog` `NavEntry` type — check `.agent/refs/nav3.md` Limitations section. If not, wrap in `Dialog { }` composable.
+- nav3 may have a `dialog` `NavEntry` type — check `.agent/refs/navigation-reference.md` Limitations section. If not, wrap in `Dialog { }` composable.
 - `DialogProperties` should be passable: `dialog<T>(properties = DialogProperties(...)) { }`.
 
 ---

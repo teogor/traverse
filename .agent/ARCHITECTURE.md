@@ -75,13 +75,13 @@ public interface Destination : NavKey
 - Keeping Traverse's own name (`Destination`) means if nav3 renames or restructures `NavKey`, Traverse callers are unaffected — only `traverse-compose` changes.
 
 **Why require `@Serializable`?**
-- nav3's `rememberNavBackStack` needs explicit serializers for non-JVM platforms (iOS, Web). See `.agent/refs/nav3.md` → "SavedStateConfiguration".
+- nav3's `rememberNavBackStack` needs explicit serializers for non-JVM platforms (iOS, Web). See `.agent/refs/navigation-reference.md` → "SavedStateConfiguration".
 - `@Serializable` enables Traverse to auto-build the `SavedStateConfiguration` from DSL registrations using `inline reified` + `serializer<T>()`.
 - Not enforceable at compile time without KSP, but documented clearly and validated at runtime.
 
 **Auto-built `SavedStateConfiguration`:** `TraverseGraphBuilder.screen<T>` is `inline reified` — Traverse collects `Pair(T::class, serializer<T>())` for every registered destination and builds the `SerializersModule` + `SavedStateConfiguration` internally. Callers never write serialization config for the simple (single-module, sealed or open) case.
 
-**Multi-module projects:** `TraverseHost` accepts an optional `serializersModule: SerializersModule?` parameter that is merged (`+`) with the auto-collected one. See `.agent/refs/nav3.md` → "Three Serialization Patterns".
+**Multi-module projects:** `TraverseHost` accepts an optional `serializersModule: SerializersModule?` parameter that is merged (`+`) with the auto-collected one. See `.agent/refs/navigation-reference.md` → "Three Serialization Patterns".
 
 ---
 
