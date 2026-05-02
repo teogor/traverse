@@ -16,6 +16,7 @@
 | `traverse-test` | ✅ M4 complete | 36 passing |
 | Demo app | ✅ M5 complete | — (runtime-verified) |
 | Deep links | ✅ M6 complete | 13 matcher tests |
+| **Annotations** | ✅ **New** — `traverse-annotations` + `traverse-ksp-processor` | — |
 | Publication | 📋 M7 | — |
 
 ---
@@ -356,20 +357,119 @@ Future options:
 
 ## 15. KSP / Annotation Processing (Optional, Post-1.0)
 
-The current approach (zero codegen) is the primary path. KSP is an opt-in overlay.
+## 15. Annotations + KSP (`traverse-annotations` + `traverse-ksp-processor`)
 
-### 💡 Ideas
+### ✅ Shipped
+
+#### `traverse-annotations` (KMP, zero external deps)
+
+| Annotation | Target | Purpose |
+|---|---|---|
+| `@TraverseScreen` | `CLASS` | Marks a full-screen destination |
+| `@TraverseDialog(dismissOnBackPress, dismissOnClickOutside)` | `CLASS` | Marks a dialog destination |
+| `@TraverseBottomSheet(skipPartiallyExpanded)` | `CLASS` | Marks a bottom sheet destination |
+| `@TraverseRoot(graphKey)` | `CLASS` | Marks start destination of a graph |
+| `@DeepLink(pattern)` | `CLASS`, repeatable | Associates a URI pattern |
+| `@Transition(preset, durationMillis)` | `CLASS` | Per-screen transition preset |
+| `@ScreenMeta(name, description, group)` | `CLASS` | Human-readable metadata |
 
 ```kotlin
-// With KSP plugin (future):
-@TraverseDestination
+@TraverseScreen
+@TraverseRoot
+@ScreenMeta(name = "Home", description = "App root", group = "main")
+@Serializable data object Home : Destination
+
+@TraverseScreen
+@DeepLink("https://example.com/user/{userId}")
+@DeepLink("app://profile/{userId}")
+@Transition(TransitionPreset.HORIZONTAL_SLIDE)
+@ScreenMeta(name = "Profile", group = "account")
 @Serializable data class Profile(val userId: String) : Destination
-// Generates: ProfileDestination.kt with deepLink helpers, route constants
+
+@TraverseDialog(dismissOnClickOutside = false)
+@Serializable data class ConfirmDelete(val itemId: String) : Destination
+
+@TraverseBottomSheet
+@Serializable data object TagPicker : Destination
 ```
 
-- `traverse-ksp-annotations` — `@TraverseDestination`, `@DeepLink(pattern)` annotations
-- `traverse-ksp-processor` — generates route constants, deep link helpers, navigation extension functions
-- Purely additive — callers using the DSL-only approach are unaffected
+**`TransitionPreset` enum:** `FADE`, `HORIZONTAL_SLIDE`, `VERTICAL_SLIDE`, `SLIDE_AND_FADE`, `SCALE_AND_FADE`, `ELEVATE`, `NONE`
+
+**`ScreenRegistry` + `ScreenInfo`:** in-process metadata registry. Populate with the generated `initTraverseScreenRegistry()` call, or manually via `ScreenRegistry.register(ScreenInfo(...))`.
+
+```kotlin
+// After calling initTraverseScreenRegistry():
+val allScreens = ScreenRegistry.screens
+val accountGroup = ScreenRegistry.byGroup("account")
+val withDeepLinks = ScreenRegistry.all.filter { it.deepLinkPatterns.isNotEmpty() }
+```
+
+#### `traverse-ksp-processor` (JVM-only, KSP 2.3.7)
+
+Add to your project: `ksp(project(":traverse-ksp-processor"))` (or the Maven artifact).
+
+For KMP projects processing `commonMain` annotations:
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    add("kspCommonMainMetadata", "dev.teogor.traverse:traverse-ksp-processor:x.y.z")
+}
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    if (name != "kspCommonMainKotlinMetadata") dependsOn("kspCommonMainKotlinMetadata")
+}
+kotlin.sourceSets.getByName("commonMain") {
+    kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+}
+```
+
+**Generated files per destination (example for `Profile(val userId: String)`):**
+
+| File | Contents |
+|---|---|
+| `ProfileRoute.kt` | `object ProfileRoute { val deepLinks: List<TraverseDeepLink>; fun buildDeepLink(userId: String): String }` |
+| `ProfileNavigatorExtensions.kt` | `fun TraverseNavigator.navigateToProfile(userId: String, builder: NavOptions.() -> Unit = {})` |
+| `TraverseAutoGraph.kt` | `fun TraverseGraphBuilder.traverseAutoGraph(homeContent: ..., profileContent: ...) { screen<Home>(...) screen<Profile>(...) ... }` |
+| `TraverseScreenRegistry.kt` | `fun initTraverseScreenRegistry() { ScreenRegistry.register(ScreenInfo(...)) ... }` |
+
+**Before KSP (manual DSL):**
+```kotlin
+TraverseHost(startDestination = Home) {
+    screen<Home> { HomeScreen() }
+    screen<Profile>(
+        deepLinks = listOf(deepLink("https://example.com/user/{userId}")),
+        transitionSpec = TraverseTransitionSpec.horizontalSlide(300),
+    ) { dest -> ProfileScreen(dest.userId) }
+    dialog<ConfirmDelete>(content = { dest -> ConfirmDeleteDialog(dest) })
+}
+```
+
+**After KSP (generated auto-graph):**
+```kotlin
+// Call at startup
+initTraverseScreenRegistry()
+
+// TraverseHost registration — just provide content lambdas
+TraverseHost(startDestination = Home) {
+    traverseAutoGraph(
+        homeContent    = { HomeScreen() },
+        profileContent = { dest -> ProfileScreen(dest.userId) },
+        confirmDeleteContent = { dest -> ConfirmDeleteDialog(dest) },
+        tagPickerContent = { TagPickerSheet() },
+    )
+}
+
+// Navigation — type-safe, no manual Profile(userId = ...) construction
+navigator.navigateToProfile(userId = "42")
+```
+
+### 💡 Ideas / Future
+
+- **Validation at build time**: KSP processor emits a `KSPLogger.error()` if `@TraverseScreen` is missing `@Serializable`
+- **Multi-module `traverseAutoGraph`**: per-module registration functions (`registerProfileModule()`) that compose at the app level
+- **Debug overlay**: a composable panel that reads `ScreenRegistry` and shows all registered destinations — useful during development
+- **`@guard<T>(predicate)`**: annotation-driven conditional navigation (auth gates)
+- **Shared element annotation**: `@SharedElement(tag)` to auto-wire shared element transitions between two `@TraverseScreen` destinations
 
 ---
 
@@ -388,8 +488,8 @@ The current approach (zero codegen) is the primary path. KSP is an opt-in overla
 | Saved State | EntrySpec.serializer populated (now used by deep links) | Back stack persistence | Platform storage adapters |
 | Analytics | — | — | Interceptor, Firebase plugin |
 | ViewModel | — | — | Per-entry VM scoping |
+| **Annotations + KSP** | ✅ `traverse-annotations` (7 annotations, ScreenRegistry) + `traverse-ksp-processor` (Route, navigate extensions, traverseAutoGraph, ScreenRegistry init) | Build-time `@Serializable` validation | Multi-module auto-graph, debug overlay, @guard |
 | Publication | — | M7: Maven Central + CI + Dokka | BOM, Gradle plugin |
-| KSP (opt-in) | — | — | @TraverseDestination, route gen |
 
 
 

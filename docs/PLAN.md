@@ -286,6 +286,28 @@ traverse/
 │   └── dsl/
 │       └── TraverseDsl.kt              @DslMarker annotation
 │
+├── traverse-annotations/       KMP — zero external deps (stdlib only)
+│   ├── TraverseScreen.kt       @Target(CLASS) @Retention(BINARY) annotation
+│   ├── TraverseDialog.kt       dismissOnBackPress, dismissOnClickOutside params
+│   ├── TraverseBottomSheet.kt  skipPartiallyExpanded param
+│   ├── TraverseRoot.kt         graphKey param (Unit::class = not set)
+│   ├── DeepLink.kt             @Repeatable URI pattern annotation
+│   ├── Transition.kt           preset: TransitionPreset + durationMillis
+│   ├── ScreenMeta.kt           name, description, group
+│   └── ScreenInfo.kt           ScreenInfo data class + ScreenRegistry singleton
+│
+├── traverse-ksp-processor/     JVM-only — KSP 2.3.7 processor
+│   ├── TraverseSymbolProcessorProvider.kt  SymbolProcessorProvider impl
+│   ├── TraverseSymbolProcessor.kt          Collects annotated classes, invokes generators
+│   ├── model/
+│   │   └── DestinationModel.kt             Parsed metadata: class, params, deep links, transition
+│   ├── visitors/
+│   │   └── DestinationVisitor.kt           KSVisitorVoid — reads all 7 annotations
+│   └── generators/
+│       ├── RouteObjectGenerator.kt         → {Class}Route.kt (deep links + URI builder)
+│       ├── NavigatorExtensionGenerator.kt  → {Class}NavigatorExtensions.kt (navigateTo* fns)
+│       └── GraphSpecGenerator.kt           → TraverseAutoGraph.kt + TraverseScreenRegistry.kt
+│
 ├── traverse-compose/           KMP — depends on traverse-core + Compose + nav3
 │   ├── TraverseHost.kt         @Composable entry point
 │   ├── graph/
@@ -321,28 +343,37 @@ traverse/
 │       └── src/
 │           └── commonMain/
 │               ├── App.kt      TraverseHost wiring
-│               ├── screen/     Feature screens (Home, Profile, Settings, etc.)
+│               ├── Destinations.kt  All destinations — now annotated with @TraverseScreen etc.
+│               ├── screen/     Feature screens (Catalog, Splash, etc.)
+│               ├── feature/    Feature demo screens
 │               ├── dialog/     Dialog destination screens
-│               └── onboarding/ Nested graph demo
+│               └── sheet/      Bottom sheet content
 │
 └── build-logic/
     ├── TraverseKmpLibraryPlugin.kt
     ├── TraverseComposePlugin.kt
-    └── TraverseKmpApplicationPlugin.kt
+    ├── TraverseKmpApplicationPlugin.kt
+    └── TraverseJvmLibraryPlugin.kt    ← NEW: for JVM-only modules (KSP processor)
 ```
 
 ### 6.1 Dependency Rules (strict, enforced by module structure)
 
 ```
-traverse-test  ──────────────────────▶  traverse-core
-traverse-compose  ──────────────────▶  traverse-core
-demo/composeApp  ───────────────────▶  traverse-compose
+traverse-annotations  ─────────────────────▶  (none — zero deps, stdlib only)
+traverse-test  ──────────────────────────────▶  traverse-core
+traverse-compose  ───────────────────────────▶  traverse-core
+traverse-ksp-processor  ─────────────────────▶  ksp-symbol-processing-api (JVM-only)
+demo/composeApp  ────────────────────────────▶  traverse-compose + traverse-annotations
+                                                 ksp(traverse-ksp-processor)
 ```
 
+- `traverse-annotations` imports: zero (stdlib only — `KClass`, `@Retention`, etc.)
 - `traverse-core` imports: `kotlinx-serialization-core`, `org.jetbrains.androidx.navigation3:navigation3-ui` (for `NavKey` type only, no Compose)
 - `traverse-compose` imports: `traverse-core`, Compose Multiplatform, `navigation3-ui`, optional `lifecycle-viewmodel-navigation3`
+- `traverse-ksp-processor` imports: `symbol-processing-api` only — accesses annotation types by FQN string, not by class reference
 - `traverse-test` imports: `traverse-core`, `kotlin-test`
 - **Never:** `traverse-core` imports anything from `traverse-compose`
+- **Never:** `traverse-annotations` imports anything from `traverse-core` or `traverse-compose`
 
 ---
 
