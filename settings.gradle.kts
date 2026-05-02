@@ -36,3 +36,4 @@ plugins {
 include(":demo:composeApp")
 include(":traverse-core")
 include(":traverse-compose")
+include(":traverse-test")

@@ -78,15 +78,20 @@
 
 ---
 
-## Milestone 4 — Test utilities (`traverse-test`)
+## Milestone 4 — Test utilities (`traverse-test`) ✅
 *Goal: `FakeTraverseNavigator` and assertion helpers.*
 
-- [ ] `traverse-test/build.gradle.kts` — KMP, testImplementation scope
-- [ ] `FakeTraverseNavigator` — records all calls, exposes history list
-- [ ] `assertNavigatedTo<T>()` extension
-- [ ] `assertNavigatedUp()` extension
-- [ ] `assertPoppedTo<T>(inclusive)` extension
-- [ ] `assertResultSet(key, value)` extension
+- [x] `traverse-test/build.gradle.kts` — KMP library, `api(traverse-core)`, `implementation(kotlin("test"))`, `implementation(coroutines-core)`
+- [x] `FakeTraverseNavigator` — implements `TraverseNavigator`; records all navigate/navigateUp/popTo calls; real in-memory back stack with full popUpTo + launchSingleTop logic; result store backed by `MutableSharedFlow`
+- [x] `assertNavigatedTo<T>()` — at least one navigate call matched type T
+- [x] `assertLastNavigatedTo<T>()` — most recent navigate call matched type T
+- [x] `assertCurrentDestination<T>()` — top of back stack is type T
+- [x] `assertNavigatedUp(times)` — navigateUp called exactly N times
+- [x] `assertPoppedTo<T>(inclusive)` — popTo called with matching type + inclusive flag
+- [x] `assertResultSet(key, value)` — setResult called with matching key and value
+- [x] `assertBackStack(vararg destinations)` — exact back-stack equality check
+- [x] `assertNoNavigation()` — no navigate/navigateUp/popTo calls made
+- [x] `FakeTraverseNavigatorTest` — 29 tests, 0 failures ✅
 
 ---
 

@@ -256,11 +256,11 @@ public data class TraverseTransitionSpec(
 | `traverse-core` M2 source files (Navigator, NavOptions, extensions, result helpers, DSL marker) | ✅ |
 | `traverse-core` unit tests (15 passing — extensions + NavOptions) | ✅ |
 | `traverse-compose` first source files (TraverseHost, DefaultNavigator, etc.) | ✅ M3 COMPLETE |
-| `traverse-test` skeleton | ❌ TODO |
+| `traverse-test` module skeleton (build.gradle.kts + FakeTraverseNavigator + TraverseAssertions) | ✅ M4 COMPLETE — 29 tests passing |
 
 **Current architecture:** `DefaultTraverseNavigator` uses `SnapshotStateList<Destination>`. `TraverseHost` uses `AnimatedContent` for screen transitions. Dialogs/bottom sheets rendered as overlays. nav3 is NOT a dependency.
 
-**Next task for the next agent:** Milestone 4 — `traverse-test` module (`FakeTraverseNavigator`, `TraverseAssertions`). See ROADMAP.md and `docs/PLAN.md` §11 M4.
+**Next task for the next agent:** Milestone 7 — Publication setup (Maven Central, GitHub Actions CI, binary compatibility validator). M6 (Deep Links) is deferred — it is a post-launch feature.
 
 ---
 
@@ -364,7 +364,20 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 14 (current)
+### 2026-05-02 — Session 15 (current)
+- **M4 complete — `traverse-test` module:**
+  - Created `traverse-test/build.gradle.kts` — KMP library applying `traverse.kmp.library`, depends on `api(traverse-core)` + `implementation(kotlin("test"))` + `implementation(coroutines-core)`.
+  - Added `:traverse-test` to `settings.gradle.kts`.
+  - **`FakeTraverseNavigator`**: full `TraverseNavigator` implementation. Maintains real in-memory `MutableList<Destination>` back stack. Applies identical `popUpTo` + `launchSingleTop` logic to production navigator. Records all `navigate()`, `navigateUp()`, `popTo()` calls. Supports result flow via internal `MutableSharedFlow`. Has `reset()` to clear history between tests.
+  - **`NavigationCall`** and **`PopToCall`** data classes expose recorded call details for rich assertions.
+  - **`TraverseAssertions.kt`**: 9 assertion extension functions on `FakeTraverseNavigator`:
+    - `assertNavigatedTo<T>()`, `assertLastNavigatedTo<T>()`, `assertCurrentDestination<T>()`
+    - `assertNavigatedUp(times)`, `assertPoppedTo<T>(inclusive)`
+    - `assertResultSet(key, value)`, `assertBackStack(vararg destinations)`, `assertNoNavigation()`
+  - **`FakeTraverseNavigatorTest`**: 29 tests (18 back-stack behaviour + 11 assertion helpers), **0 failures** ✅.
+  - ROADMAP.md M4 ticked off as ✅.
+
+### 2026-05-02 — Session 14
 - **Fixed all outstanding code quality issues (zero issues remain):**
   - **Compiler warning fixed** — `TraverseHost.kt:123`: `if (isOverlay && topSpec != null)` → `val overlaySpec = topSpec.takeIf { isOverlay }; if (overlaySpec != null)`. `topSpec != null` was always true when `isOverlay == true` (by definition of its computation). Using `takeIf` makes the smart cast explicit and eliminates the redundancy. **Zero compiler warnings** across all three modules. ✅
   - **Stale KDoc fixed** — `Destination.kt:7`: removed "mapping handled internally by traverse-compose" (implied nav3 dependency still existed). Now correctly states: "no framework dependencies, fully portable and independently testable."
