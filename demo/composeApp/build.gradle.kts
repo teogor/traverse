@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.jetbrains.kotlin.compose)
-    alias(libs.plugins.jetbrains.compose.hotReload)
+    alias(libs.plugins.jetbrains.compose.hot.reload)
 }
 
 kotlin {
@@ -67,12 +67,12 @@ kotlin {
 
 android {
     namespace = "dev.teogor.traverse.demo"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = libs.versions.android.sdk.compile.get().toInt()
 
     defaultConfig {
         applicationId = "dev.teogor.traverse.demo"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        minSdk = libs.versions.android.sdk.min.get().toInt()
+        targetSdk = libs.versions.android.sdk.target.get().toInt()
         versionCode = 1
         versionName = "1.0"
     }

@@ -3,7 +3,7 @@ plugins {
     // in each subproject's classloader
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
-    alias(libs.plugins.jetbrains.compose.hotReload) apply false
+    alias(libs.plugins.jetbrains.compose.hot.reload) apply false
     alias(libs.plugins.jetbrains.compose) apply false
     alias(libs.plugins.jetbrains.kotlin.compose) apply false
     alias(libs.plugins.jetbrains.kotlin.multiplatform) apply false

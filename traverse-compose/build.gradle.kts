@@ -36,9 +36,9 @@ kotlin {
 }
 android {
     namespace = "dev.teogor.traverse.compose"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = libs.versions.android.sdk.compile.get().toInt()
     defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
+        minSdk = libs.versions.android.sdk.min.get().toInt()
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
