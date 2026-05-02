@@ -328,4 +328,63 @@ class TraverseAssertionsTest {
     }
 }
 
+// ── assertNavigatedTo / assertLastNavigatedTo — predicate overloads ───────────
 
+class AssertNavigatedToPredicateTest {
+
+    @Test
+    fun assertNavigatedTo_withMatchingPredicate_passes() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigate(Profile("42"))
+        fake.assertNavigatedTo<Profile> { it.userId == "42" }
+    }
+
+    @Test
+    fun assertNavigatedTo_withNonMatchingPredicate_fails() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigate(Profile("99"))
+        var threw = false
+        try {
+            fake.assertNavigatedTo<Profile> { it.userId == "42" }
+        } catch (_: AssertionError) {
+            threw = true
+        }
+        assertTrue(threw, "Expected AssertionError when predicate does not match")
+    }
+
+    @Test
+    fun assertNavigatedTo_withWrongType_failsEvenIfPredicateWouldPass() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigate(Feed)
+        var threw = false
+        try {
+            @Suppress("USELESS_CAST")
+            fake.assertNavigatedTo<Profile> { true }
+        } catch (_: AssertionError) {
+            threw = true
+        }
+        assertTrue(threw, "Expected AssertionError when destination type does not match")
+    }
+
+    @Test
+    fun assertLastNavigatedTo_withMatchingPredicate_passes() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigate(Profile("12"))
+        fake.navigate(Profile("99"))
+        fake.assertLastNavigatedTo<Profile> { it.userId == "99" }
+    }
+
+    @Test
+    fun assertLastNavigatedTo_withNonLastMatchingPredicate_fails() {
+        val fake = FakeTraverseNavigator(Home)
+        fake.navigate(Profile("42"))  // not the last
+        fake.navigate(Feed)           // last — wrong type
+        var threw = false
+        try {
+            fake.assertLastNavigatedTo<Profile> { it.userId == "42" }
+        } catch (_: AssertionError) {
+            threw = true
+        }
+        assertTrue(threw, "Expected AssertionError when last call is a different type")
+    }
+}

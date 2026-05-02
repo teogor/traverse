@@ -22,6 +22,28 @@ public inline fun <reified T : Destination> FakeTraverseNavigator.assertNavigate
 }
 
 /**
+ * Asserts that [FakeTraverseNavigator.navigate] was called at least once with a destination
+ * of type [T] that satisfies [predicate].
+ *
+ * ```kotlin
+ * fake.assertNavigatedTo<Profile> { it.userId == "42" }
+ * ```
+ *
+ * @param predicate Receives the typed destination; return `true` to accept the call.
+ */
+public inline fun <reified T : Destination> FakeTraverseNavigator.assertNavigatedTo(
+    crossinline predicate: (T) -> Boolean,
+) {
+    val typed = navigateCalls.filter { it.destination is T }.map { it.destination as T }
+    assertTrue(
+        typed.any(predicate),
+        "Expected at least one navigate() to ${T::class.simpleName} matching predicate " +
+            "but recorded calls were: " +
+            typed.ifEmpty { listOf("<none>") },
+    )
+}
+
+/**
  * Asserts that the last [FakeTraverseNavigator.navigate] call was to a destination of type [T].
  *
  * ```kotlin
@@ -34,6 +56,30 @@ public inline fun <reified T : Destination> FakeTraverseNavigator.assertLastNavi
         last?.destination is T,
         "Expected last navigate() to be ${T::class.simpleName} but was " +
             (last?.destination?.let { it::class.simpleName } ?: "<none>"),
+    )
+}
+
+/**
+ * Asserts that the last [FakeTraverseNavigator.navigate] call was to a destination of type [T]
+ * that satisfies [predicate].
+ *
+ * ```kotlin
+ * fake.assertLastNavigatedTo<Profile> { it.userId == "42" }
+ * ```
+ *
+ * @param predicate Receives the typed destination; return `true` to accept it.
+ */
+public inline fun <reified T : Destination> FakeTraverseNavigator.assertLastNavigatedTo(
+    crossinline predicate: (T) -> Boolean,
+) {
+    val last = navigateCalls.lastOrNull()
+    val typed = last?.destination as? T
+    assertTrue(
+        typed != null && predicate(typed),
+        "Expected last navigate() to be ${T::class.simpleName} matching predicate " +
+            "but was ${last?.destination?.let { it::class.simpleName } ?: "<none>"}${
+                if (typed != null) " (predicate returned false for $typed)" else ""
+            }",
     )
 }
 
