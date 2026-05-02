@@ -1,4 +1,4 @@
-package dev.teogor.traverse
+package dev.teogor.traverse.demo
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 
-import traverse.composeapp.generated.resources.Res
-import traverse.composeapp.generated.resources.compose_multiplatform
+import dev.teogor.traverse.demo.generated.resources.Res
+import dev.teogor.traverse.demo.generated.resources.compose_multiplatform
 
 @Composable
 @Preview

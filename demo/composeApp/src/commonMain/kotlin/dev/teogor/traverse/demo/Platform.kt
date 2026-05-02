@@ -1,4 +1,4 @@
-package dev.teogor.traverse
+package dev.teogor.traverse.demo
 
 interface Platform {
     val name: String

@@ -1,4 +1,4 @@
-package dev.teogor.traverse
+package dev.teogor.traverse.demo
 
 class JsPlatform: Platform {
     override val name: String = "Web with Kotlin/JS"

@@ -66,11 +66,11 @@ kotlin {
 }
 
 android {
-    namespace = "dev.teogor.traverse"
+    namespace = "dev.teogor.traverse.demo"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "dev.teogor.traverse"
+        applicationId = "dev.teogor.traverse.demo"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -98,12 +98,17 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "dev.teogor.traverse.MainKt"
+        mainClass = "dev.teogor.traverse.demo.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "dev.teogor.traverse"
+            packageName = "dev.teogor.traverse.demo"
             packageVersion = "1.0.0"
         }
     }
 }
+
+compose.resources {
+    packageOfResClass = "dev.teogor.traverse.demo.generated.resources"
+}
+

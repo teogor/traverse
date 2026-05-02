@@ -1,4 +1,4 @@
-package dev.teogor.traverse
+package dev.teogor.traverse.demo
 
 import androidx.compose.ui.window.ComposeUIViewController
 

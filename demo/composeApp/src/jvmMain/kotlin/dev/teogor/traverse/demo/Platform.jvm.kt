@@ -1,4 +1,4 @@
-package dev.teogor.traverse
+package dev.teogor.traverse.demo
 
 class JVMPlatform: Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
