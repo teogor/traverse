@@ -1237,13 +1237,13 @@ Scaffold(
 | Maven publishing config | `maven-publish` + Sonatype OSSRH credentials in `traverse-core/build.gradle.kts` and `traverse-compose/build.gradle.kts` |
 | Group ID | `dev.teogor.traverse` |
 | Artifact IDs | `traverse-core`, `traverse-compose`, `traverse-test` |
-| Version scheme | `0.1.0-alpha01` → `0.1.0-rc01` → `0.1.0` |
+| Version scheme | `1.0.0-alpha01` → `1.0.0-rc01` → `1.0.0` |
 | POM metadata | `<name>`, `<description>`, `<url>`, `<licenses>`, `<developers>`, `<scm>` |
 | GitHub Actions CI | Build + test on every PR (`ubuntu-latest`, `macos-latest` for iOS) |
 | Binary compat validator | `kotlinx-binary-compatibility-validator` — `apiCheck` task on every build |
 | Dokka | Generate API docs, publish to GitHub Pages |
 | README | Full getting-started guide, comparison table, migration guide from compose-destinations |
-| `0.1.0-alpha01` release | Tag, deploy to Maven Central |
+| `1.0.0-alpha01` release | Tag, deploy to Maven Central |
 
 ---
 
@@ -1293,24 +1293,24 @@ UI tests (demo/composeApp)                ← Full app on Android + Desktop
 ### 13.1 Version policy
 
 ```
-0.x.y-alphaN  — active development, API may change
-0.x.y-betaN   — feature-complete, API stabilising
-0.x.y-rcN     — release candidate, only bug fixes
-0.x.y         — stable
+1.x.y-alphaN  — active development, API may change
+1.x.y-betaN   — feature-complete, API stabilising
+1.x.y-rcN     — release candidate, only bug fixes
+1.x.y         — stable
 ```
 
-First public milestone: `0.1.0-alpha01` after M3 (core + compose working).
+First public milestone: `1.0.0-alpha01` after M3 (core + compose working).
 
 ### 13.2 API stability policy
 
-- `traverse-core` reaches API stability at `0.1.0-rc01`.
-- `traverse-compose` reaches API stability at `0.1.0-rc01`.
+- `traverse-core` reaches API stability at `1.0.0-rc01`.
+- `traverse-compose` reaches API stability at `1.0.0-rc01`.
 - `traverse-test` is `@ExperimentalTraverseTestApi` until `0.2.0`.
 - Deep-link API is `@ExperimentalTraverseApi` until `0.2.0`.
 
 ### 13.3 Deprecation policy
 
-Once stable (0.1.0): deprecated APIs are supported for at minimum 2 minor versions before removal.
+Once stable (1.0.0): deprecated APIs are supported for at minimum 2 minor versions before removal.
 
 ---
 

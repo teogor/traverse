@@ -118,7 +118,7 @@
 - [ ] GitHub Actions CI — build all targets on every PR
 - [ ] API binary compatibility check (Metalava or `kotlinx-binary-compatibility-validator`)
 - [ ] Dokka docs site
-- [ ] Publish `0.1.0-alpha01` to Maven Central
+- [ ] Publish `1.0.0-alpha01` to Maven Central
 
 ---
 

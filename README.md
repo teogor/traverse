@@ -42,7 +42,7 @@ Traverse is the spiritual successor to [compose-destinations](https://github.com
 ```kotlin
 // build.gradle.kts
 commonMain.dependencies {
-    implementation("dev.teogor.traverse:traverse-compose:0.1.0")
+    implementation("dev.teogor.traverse:traverse-compose:1.0.0-alpha01")
 }
 ```
 
