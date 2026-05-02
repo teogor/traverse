@@ -11,11 +11,15 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
+import dev.teogor.traverse.compose.backgesture.LocalPredictiveBackProgress
 import dev.teogor.traverse.compose.backgesture.TraverseBackHandler
 import dev.teogor.traverse.compose.backgesture.traverseBackKeyModifier
 import dev.teogor.traverse.compose.deeplink.TraverseDeepLinkRegistry
@@ -82,7 +86,11 @@ public fun TraverseHost(
         // Simple render without animation; used by FakeTraverseNavigator in unit tests.
         navigator != null -> {
             CompositionLocalProvider(LocalTraverseNavigator provides navigator) {
-                TraverseBackHandler(enabled = navigator.canNavigateUp) { navigator.navigateUp() }
+                TraverseBackHandler(
+                    enabled = navigator.canNavigateUp,
+                    onProgress = {},        // no animation in test/preview mode
+                    onBack = { navigator.navigateUp() },
+                )
                 val dest = navigator.currentDestination
                 graphBuilder.findSpec(dest)?.content?.invoke(dest)
             }
@@ -132,9 +140,20 @@ private fun TraverseAnimatedHostCore(
                 onBack = { navigator.navigateUp() },
             ),
     ) {
-        CompositionLocalProvider(LocalTraverseNavigator provides navigator) {
+        // Track the predictive-back swipe progress (0.0 → 1.0) so screens can animate.
+        // On non-Android platforms this value stays at 0f (onProgress is never called).
+        var backProgress by remember { mutableFloatStateOf(0f) }
+
+        CompositionLocalProvider(
+            LocalTraverseNavigator provides navigator,
+            LocalPredictiveBackProgress provides backProgress,
+        ) {
             // Android back-handler (no-op on other platforms — key modifier handles those).
-            TraverseBackHandler(enabled = navigator.canNavigateUp) { navigator.navigateUp() }
+            TraverseBackHandler(
+                enabled = navigator.canNavigateUp,
+                onProgress = { backProgress = it },
+                onBack = { navigator.navigateUp() },
+            )
 
             val topDest = backStack.lastOrNull() ?: return@CompositionLocalProvider
             val topSpec = graphBuilder.findSpec(topDest)
