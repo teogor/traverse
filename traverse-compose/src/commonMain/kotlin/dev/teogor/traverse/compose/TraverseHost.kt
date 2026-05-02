@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -20,8 +22,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Dialog
 import dev.teogor.traverse.compose.backgesture.LocalPredictiveBackProgress
+import dev.teogor.traverse.compose.backgesture.LocalPredictiveBackSwipeEdge
 import dev.teogor.traverse.compose.backgesture.TraverseBackHandler
 import dev.teogor.traverse.compose.backgesture.traverseBackKeyModifier
 import dev.teogor.traverse.compose.deeplink.TraverseDeepLinkRegistry
@@ -93,6 +99,7 @@ public fun TraverseHost(
                     enabled = navigator.canNavigateUp,
                     backStackSize = navigator.backStack.size,
                     onProgress = {},        // no animation in test/preview mode
+                    onSwipeEdge = {},       // no animation in test/preview mode
                     onBack = { navigator.navigateUp() },
                 )
                 val dest = navigator.currentDestination
@@ -159,16 +166,20 @@ private fun TraverseAnimatedHostCore(
         // Track the predictive-back swipe progress (0.0 → 1.0) so screens can animate.
         // On non-Android platforms this value stays at 0f (onProgress is never called).
         var backProgress by remember { mutableFloatStateOf(0f) }
+        // Track the swipe edge: 0 = left, 1 = right, -1 = no active gesture.
+        var backSwipeEdge by remember { mutableIntStateOf(-1) }
 
         CompositionLocalProvider(
             LocalTraverseNavigator provides navigator,
             LocalPredictiveBackProgress provides backProgress,
+            LocalPredictiveBackSwipeEdge provides backSwipeEdge,
         ) {
             // Android back-handler (no-op on other platforms — key modifier handles those).
             TraverseBackHandler(
                 enabled = navigator.canNavigateUp,
                 backStackSize = backStack.size,
                 onProgress = { backProgress = it },
+                onSwipeEdge = { backSwipeEdge = it },
                 onBack = { navigator.navigateUp() },
             )
 
@@ -220,7 +231,29 @@ private fun TraverseAnimatedHostCore(
                     contentKey = { it },
                     label = "TraverseHost",
                 ) { dest ->
-                    graphBuilder.findSpec(dest)?.content?.invoke(dest)
+                    // Apply the Material-You predictive-back shrink-and-round transform while a
+                    // gesture is in progress.  When backProgress == 0f the graphicsLayer is a
+                    // no-op so there is zero overhead on normal screen transitions.
+                    Box(
+                        modifier = Modifier.graphicsLayer {
+                            if (backProgress > 0f) {
+                                val scale = lerp(1f, 0.9f, backProgress)
+                                scaleX = scale
+                                scaleY = scale
+                                // Shift slightly toward the swipe edge so the screen appears to
+                                // "lift" in the direction the user is dragging.
+                                translationX = when (backSwipeEdge) {
+                                    0 -> lerp(0f, 32.dp.toPx(), backProgress)  // left edge → shift right
+                                    1 -> lerp(0f, -32.dp.toPx(), backProgress) // right edge → shift left
+                                    else -> 0f
+                                }
+                                clip = true
+                                shape = RoundedCornerShape(lerp(0f, 28f, backProgress).dp)
+                            }
+                        },
+                    ) {
+                        graphBuilder.findSpec(dest)?.content?.invoke(dest)
+                    }
                 }
             }
 

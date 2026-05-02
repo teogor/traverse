@@ -15,13 +15,14 @@ import androidx.compose.runtime.DisposableEffect
  * 3. When [enabled] is `false` (back stack has exactly one entry), no listener is
  *    registered — the browser's native back behaviour is preserved.
  *
- * [onProgress] is not applicable for browser back navigation and is ignored.
+ * [onProgress] and [onSwipeEdge] are not applicable for browser back navigation and are ignored.
  */
 @Composable
 internal actual fun TraverseBackHandler(
     enabled: Boolean,
     backStackSize: Int,
     onProgress: (Float) -> Unit,
+    onSwipeEdge: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
     // Use both `enabled` and `backStackSize` as keys:

@@ -10,13 +10,14 @@ import androidx.compose.runtime.DisposableEffect
  * The only difference is the WasmJs FFI: event listeners use `JsAny?` parameters and
  * [`kotlinx.browser`][kotlinx.browser.window] is accessed via the Wasm browser module.
  *
- * [onProgress] is not applicable for browser back navigation and is ignored.
+ * [onProgress] and [onSwipeEdge] are not applicable for browser back navigation and are ignored.
  */
 @Composable
 internal actual fun TraverseBackHandler(
     enabled: Boolean,
     backStackSize: Int,
     onProgress: (Float) -> Unit,
+    onSwipeEdge: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
     DisposableEffect(enabled, backStackSize) {

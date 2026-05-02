@@ -26,6 +26,19 @@ import androidx.compose.runtime.compositionLocalOf
 public val LocalPredictiveBackProgress: ProvidableCompositionLocal<Float> =
     compositionLocalOf { 0f }
 
+/**
+ * Composition local that carries the swipe edge of the active predictive-back gesture.
+ *
+ * - `0` — gesture started from the **left** edge ([BackEventCompat.EDGE_LEFT]).
+ * - `1` — gesture started from the **right** edge ([BackEventCompat.EDGE_RIGHT]).
+ * - `-1` — no active gesture (default / gesture ended).
+ *
+ * Only meaningful on Android 14+ (API 34+); always `-1` on all other platforms.
+ */
+public val LocalPredictiveBackSwipeEdge: ProvidableCompositionLocal<Int> =
+    compositionLocalOf { -1 }
+
+
 
 
 
