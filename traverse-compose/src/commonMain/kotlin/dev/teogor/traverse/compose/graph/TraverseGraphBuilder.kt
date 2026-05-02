@@ -5,13 +5,12 @@ import dev.teogor.traverse.compose.internal.EntrySpec
 import dev.teogor.traverse.compose.internal.EntryType
 import dev.teogor.traverse.core.Destination
 import dev.teogor.traverse.core.dsl.TraverseDsl
-import kotlinx.serialization.serializer
 
 /**
  * DSL scope for registering navigation destinations inside [TraverseHost].
  *
  * All registration functions are `inline reified` so that Traverse can capture
- * `T::class` and `serializer<T>()` at the call site — no code generation needed.
+ * `T::class` at the call site — no code generation needed.
  *
  * ```kotlin
  * TraverseHost(startDestination = Home) {
@@ -44,7 +43,6 @@ public class TraverseGraphBuilder internal constructor() {
         @Suppress("UNCHECKED_CAST")
         entries += EntrySpec(
             klass = T::class,
-            serializer = serializer<T>(),
             type = EntryType.SCREEN,
             content = { dest -> content(dest as T) },
         )
@@ -67,7 +65,6 @@ public class TraverseGraphBuilder internal constructor() {
         @Suppress("UNCHECKED_CAST")
         entries += EntrySpec(
             klass = T::class,
-            serializer = serializer<T>(),
             type = EntryType.DIALOG,
             content = { dest -> content(dest as T) },
         )
@@ -89,7 +86,6 @@ public class TraverseGraphBuilder internal constructor() {
         @Suppress("UNCHECKED_CAST")
         entries += EntrySpec(
             klass = T::class,
-            serializer = serializer<T>(),
             type = EntryType.BOTTOM_SHEET,
             content = { dest -> content(dest as T) },
         )

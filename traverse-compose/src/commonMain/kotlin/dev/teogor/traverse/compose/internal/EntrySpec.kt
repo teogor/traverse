@@ -18,7 +18,12 @@ internal enum class EntryType { SCREEN, DIALOG, BOTTOM_SHEET }
 @PublishedApi
 internal class EntrySpec(
     val klass: KClass<out Destination>,
-    val serializer: KSerializer<out Destination>,
+    /**
+     * Serializer for this destination type — captured eagerly at registration time via
+     * `inline reified` call sites. Null until the saved-state milestone where it will be
+     * used to persist and restore the back stack across process death.
+     */
+    val serializer: KSerializer<out Destination>? = null,
     val type: EntryType,
     val content: @Composable (Destination) -> Unit,
 )

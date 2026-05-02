@@ -272,7 +272,7 @@ public data class TraverseTransitionSpec(
 2. ✅ **Platform support** — VERIFIED: Android + iOS + Desktop + **wasmJs** all supported as of `1.0.0-alpha05`. Include `wasmJs` in KMP targets.
 3. ✅ **`Destination` interface design** — Option A chosen: `Destination` is a plain marker interface, does NOT extend `NavKey`. `traverse-core` is fully framework-free.
 4. ✅ **`SavedStateConfiguration`** — No longer needed. We use a plain `SnapshotStateList<Destination>`. Saved state (process death) is deferred to a future milestone.
-5. **Multi-module serialization** — Still relevant for future saved-state feature. `EntrySpec` keeps `serializer` field.
+5. **Multi-module serialization** — Still relevant for future saved-state feature. `EntrySpec.serializer` field kept as nullable (`KSerializer<out Destination>? = null`). Will be populated via `inline reified` call sites in a future saved-state milestone.
 6. ✅ **nav3 nested back-stack API** — Not used. Nested graphs resolved via `nestedGraphKeys` map in `DefaultTraverseNavigator`. `graphKey` destinations redirect to their `startDestination` at navigate-time.
 7. ✅ **nav3 `dialog` and `bottomSheet` types** — Implemented without nav3: dialog entries are rendered via Compose `Dialog {}`, bottom sheets via `ModalBottomSheet {}`, as overlays on top of `AnimatedContent`.
 8. ✅ **`SavedStateHandle` on iOS/Web** — `TraverseResultStore` backed by `MutableSharedFlow` already implemented in `traverse-compose/internal/TraverseResultStore.kt`.
@@ -364,7 +364,15 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 
 ## Progress Log
 
-### 2026-05-02 — Session 11 (current)
+### 2026-05-02 — Session 12 (current)
+- **Fixed runtime crash: `SerializationException: Serializer for class 'OnboardingWelcome' is not found`**
+  - Root cause: `screen<T>()`, `dialog<T>()`, `bottomSheet<T>()` called `serializer<T>()` inside `EntrySpec(...)`. When the Compose compiler extracts `@Composable` content lambdas from within the builder lambda into `ComposableSingletons`, the `serializer<T>()` call inside the extracted body fails at runtime on desktop JVM (reflective lookup) even though `T` is `@Serializable`. The serializer field was completely unused at runtime (reserved for saved-state milestone).
+  - Fix: made `EntrySpec.serializer` nullable with default `null`. Removed `serializer = serializer<T>()` from all three `EntrySpec(...)` constructor calls. Removed unused `import kotlinx.serialization.serializer` from `TraverseGraphBuilder.kt`.
+  - `EntrySpec.serializer` is kept (nullable) with KDoc noting it will be populated for saved-state in a future milestone via proper `inline reified` context.
+  - **BUILD SUCCESSFUL** ✅. **DEMO RUNS** ✅ — no crash, no `SerializationException`.
+- **Re: `jetbrains-navigation3-ui` dependency**: Confirmed NOT needed — `traverse-compose/build.gradle.kts` already has no nav3 dependency. Traverse's engine is self-contained (`AnimatedContent` + `SnapshotStateList`). nav3 reference-only status confirmed and documented.
+
+### 2026-05-02 — Session 11
 - **Fixed `js` platform build failure:**
   - Root cause: `TraverseKmpLibraryPlugin` targeted `android, ios, jvm, wasmJs` but NOT `js`. The demo app's `commonMain` depends on both libraries and has `js` target → KMP dependency resolution failure on `js`.
   - Fixed `TraverseKmpLibraryPlugin.kt`: added `js { browser() }` target

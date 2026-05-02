@@ -4,6 +4,7 @@ plugins {
     id("traverse.kmp.application")
     id("traverse.compose")
     alias(libs.plugins.jetbrains.compose.hot.reload)
+    alias(libs.plugins.jetbrains.kotlin.serialization)
 }
 
 kotlin {
