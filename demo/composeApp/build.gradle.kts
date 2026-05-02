@@ -35,13 +35,11 @@ kotlin {
 }
 
 // ── KSP: run the Traverse annotation processor ───────────────────────────────
-// kspCommonMainMetadata: generates into the commonMain shared source dir (iOS, JS, wasmJS + tooling).
-// kspAndroid / kspJvm: platform-specific runs so each entry point (MainActivity.kt, main.kt)
-// can call initTraverseScreenRegistry() from its own generated source set.
+// kspCommonMainMetadata processes all @TraverseScreen / @TraverseDialog / @TraverseBottomSheet
+// annotations and generates RegisterTraverseScreens() as a @Composable in commonMain —
+// available to every target without platform-specific KSP runs.
 dependencies {
     add("kspCommonMainMetadata", project(":traverse-ksp-processor"))
-    add("kspAndroid",            project(":traverse-ksp-processor"))
-    add("kspJvm",                project(":traverse-ksp-processor"))
 }
 
 // Make every KMP compile task depend on kspCommonMainKotlinMetadata so that
@@ -52,14 +50,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().con
     }
 }
 
-// Explicitly wire platform-specific KSP tasks after commonMain KSP to satisfy
-// Gradle's task-ordering validation (implicit dependency warning).
-tasks.matching { it.name.startsWith("ksp") && (it.name.contains("KotlinAndroid") || it.name.contains("KotlinJvm")) }.configureEach {
-    dependsOn("kspCommonMainKotlinMetadata")
-}
-
 // Add the KSP-generated commonMain sources to the commonMain source set.
-// This makes TraverseAutoGraph.kt, TraverseScreenRegistry.kt, etc. visible to all targets.
+// This makes TraverseAutoGraph.kt, RegisterTraverseScreens(), etc. visible to all targets.
 kotlin.sourceSets.getByName("commonMain") {
     kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
 }
