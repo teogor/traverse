@@ -238,14 +238,16 @@ public data class TraverseTransitionSpec(
 | `ARCHITECTURE.md` | ✅ |
 | `ROADMAP.md` | ✅ |
 | `CONTRIBUTING.md` | ✅ |
-| `TRAVERSE_MEMORY.md` | ✅ (this file) |
-| Gradle skeleton (settings, build, libs.versions.toml) | ❌ TODO |
-| `traverse-core` first source files | ❌ TODO |
-| `traverse-compose` first source files | ❌ TODO |
+| `MEMORY.md` | ✅ (this file) |
+| Gradle skeleton (settings, build, libs.versions.toml) | ✅ |
+| `demo/composeApp` (KMP Jetbrains default demo) | ✅ |
+| `traverse-core` module skeleton (build.gradle.kts + Destination.kt) | ✅ |
+| `traverse-compose` module skeleton (build.gradle.kts) | ✅ |
+| `traverse-core` first source files (Navigator, results, DSL) | ❌ TODO |
+| `traverse-compose` first source files (TraverseHost, etc.) | ❌ TODO |
 | `traverse-test` skeleton | ❌ TODO |
-| Demo app skeleton | ❌ TODO |
 
-**Next task for the next agent:** Start Milestone 1 — Gradle skeleton. See ROADMAP.md for the checklist.
+**Next task for the next agent:** Milestone 2 — implement `traverse-core` source files. See ROADMAP.md.
 
 ---
 
@@ -291,6 +293,19 @@ Armature (`/Users/teodor.grigor/Teogor/armature`) is the project this grew from.
 - Read all repo files: README.md, CONTRIBUTING.md, ARCHITECTURE.md, ROADMAP.md, MEMORY.md.
 - Updated MEMORY.md with Military Command Mode operating protocol.
 - Standing by for orders. Next logical order: Milestone 1 — Gradle skeleton.
+
+### 2026-05-02 — Session 3
+- Received order: move default KMP demo app to demo module, create traverse library module.
+- Moved `composeApp/` → `demo/composeApp/` (all source intact).
+- Updated `settings.gradle.kts`: `:composeApp` → `:demo:composeApp`, added `:traverse-core`, `:traverse-compose`.
+- Fixed `iosApp/iosApp.xcodeproj/project.pbxproj`: updated Gradle task path to `:demo:composeApp:embedAndSignAppleFrameworkForXcode`.
+- Created `traverse-core/build.gradle.kts`: KMP, `explicitApi()`, `kotlinx-serialization-core`, no Compose dep.
+- Created `traverse-core/src/commonMain/…/core/Destination.kt`: initial stub.
+- Created `traverse-compose/build.gradle.kts`: KMP, `explicitApi()`, Compose + nav3, depends on `:traverse-core`.
+- Updated `gradle/libs.versions.toml`: added `kotlinx-serialization 1.8.1`, `navigation3 1.0.0-alpha05`, `kotlinSerialization` plugin.
+- Updated root `build.gradle.kts`: declared `kotlinSerialization` plugin.
+- Verified: `./gradlew projects` shows all 4 modules correctly. BUILD SUCCESSFUL.
+- Committed: `chore: restructure into demo/composeApp + traverse-core + traverse-compose modules`.
 
 ### 2026-05-02 — Session 1 (by previous agent from armature project)
 - Created the git repo at `/Users/teodor.grigor/Teogor/traverse`.
