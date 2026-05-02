@@ -16,8 +16,9 @@ import kotlin.coroutines.cancellation.CancellationException
  *   gets `-1`; the gesture is treated as a regular back press.
  *
  * Per the Android predictive-back-progress documentation:
- * - On **commit** (flow completes): [onBack] is called; [onProgress]/[onSwipeEdge] reset to
- *   `0f`/`-1` so there is no visual artifact as [AnimatedContent] takes over the exit transition.
+ * - On **commit** (flow completes): [onBack] is called FIRST (so [TraverseHost] can read
+ *   `rawBackProgress > 0f` and set the predictive-back-commit flag), then [onProgress]/[onSwipeEdge]
+ *   are reset so [AnimatedContent] can decide whether to suppress its exit transition.
  * - On **cancel** (CancellationException): [onProgress] is reset to `0f` and [onSwipeEdge] to
  *   `-1`. TraverseHost drives the stored value through `animateFloatAsState(spring(...))` so the
  *   screen bounces back smoothly instead of snapping abruptly.
@@ -36,15 +37,18 @@ internal actual fun TraverseBackHandler(
                 onSwipeEdge(event.swipeEdge)
                 onProgress(event.progress)
             }
-            // Flow completed normally → user committed the back gesture.
-            // Reset visual state before handing off to AnimatedContent exit transition.
+            // Flow completed → user committed the back gesture.
+            // Call onBack() FIRST: rawBackProgress is still > 0f here so TraverseHost
+            // can detect "this pop was driven by a predictive swipe" and suppress the
+            // duplicate AnimatedContent exit transition.
+            onBack()
+            // Reset visual state AFTER: at this point TraverseHost has already latched
+            // the commit flag; resetting to 0f triggers the snap() animation spec.
             onProgress(0f)
             onSwipeEdge(-1)
-            onBack()
         } catch (e: CancellationException) {
-            // Gesture was cancelled (user pulled finger back without completing).
-            // Reset progress — TraverseHost's animateFloatAsState(spring()) will animate
-            // the value smoothly back from wherever the gesture was back to 0f.
+            // Gesture was cancelled — TraverseHost's animateFloatAsState(spring()) will
+            // animate the value smoothly back to 0f.
             onProgress(0f)
             onSwipeEdge(-1)
             throw e  // must re-throw so the coroutine is properly cancelled

@@ -1,6 +1,8 @@
 package dev.teogor.traverse.compose
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -16,10 +18,12 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -172,15 +176,20 @@ private fun TraverseAnimatedHostCore(
         var rawBackProgress by remember { mutableFloatStateOf(0f) }
         // Track the swipe edge: 0 = left, 1 = right, -1 = no active gesture.
         var backSwipeEdge by remember { mutableIntStateOf(-1) }
+        // True for exactly one composition cycle when a predictive-back gesture is committed
+        // (not cancelled). Used to suppress the duplicate AnimatedContent exit transition.
+        var wasPredictiveBackCommit by remember { mutableStateOf(false) }
 
         // Per the Android docs (predictive-back-progress):
-        //   - During the gesture: snap() so the animated value matches the touch position
-        //     on every frame — no perceptible lag.
-        //   - On cancel (rawBackProgress reset to 0f): spring() so the screen smoothly
-        //     bounces back to its original position instead of snapping abruptly.
+        //   - During gesture (rawBackProgress > 0): snap() — zero lag behind finger.
+        //   - After commit (wasPredictiveBackCommit = true, rawBackProgress reset to 0):
+        //       snap() — incoming screen renders at 100% scale immediately, no spring dip.
+        //   - After cancel (rawBackProgress reset to 0, commit flag false):
+        //       spring() — smooth bounce back to resting position.
         val backProgress by animateFloatAsState(
             targetValue = rawBackProgress,
-            animationSpec = if (rawBackProgress > 0f) snap() else spring(stiffness = Spring.StiffnessMediumLow),
+            animationSpec = if (rawBackProgress > 0f || wasPredictiveBackCommit) snap()
+                            else spring(stiffness = Spring.StiffnessMediumLow),
             label = "predictiveBackProgress",
         )
 
@@ -195,7 +204,13 @@ private fun TraverseAnimatedHostCore(
                 backStackSize = backStack.size,
                 onProgress = { rawBackProgress = it },
                 onSwipeEdge = { backSwipeEdge = it },
-                onBack = { navigator.navigateUp() },
+                onBack = {
+                    // AndroidBackHandler calls onBack() BEFORE onProgress(0f), so
+                    // rawBackProgress is still > 0f here on a real predictive gesture.
+                    // On Android < 14 (no gesture events), rawBackProgress stays 0f.
+                    if (rawBackProgress > 0f) wasPredictiveBackCommit = true
+                    navigator.navigateUp()
+                },
             )
 
             val topDest = backStack.lastOrNull() ?: return@CompositionLocalProvider
@@ -210,6 +225,9 @@ private fun TraverseAnimatedHostCore(
             }
 
             screenDest?.let { currentScreen ->
+                // Reset the commit flag after each navigation so the NEXT pop uses normal transitions.
+                LaunchedEffect(currentScreen) { wasPredictiveBackCommit = false }
+
                 // Read progress/edge in composable scope — captured by both layers below.
                 val progress = LocalPredictiveBackProgress.current
                 val edge = LocalPredictiveBackSwipeEdge.current
@@ -250,27 +268,34 @@ private fun TraverseAnimatedHostCore(
                     transitionSpec = {
                         // Pop detection: the outgoing destination is no longer on the stack.
                         val isPop = !backStack.contains(initialState)
-                        val targetSpec = graphBuilder.findSpec(targetState)
-                        val initialSpec = graphBuilder.findSpec(initialState)
 
-                        if (isPop) {
-                            val enter = targetSpec?.popEnterTransition?.invoke()
-                                ?: initialSpec?.popEnterTransition?.invoke()
-                                ?: transitions?.popEnterTransition?.invoke()
-                                ?: fadeIn()
-                            val exit = initialSpec?.popExitTransition?.invoke()
-                                ?: targetSpec?.popExitTransition?.invoke()
-                                ?: transitions?.popExitTransition?.invoke()
-                                ?: fadeOut()
-                            enter togetherWith exit
-                        } else {
-                            val enter = targetSpec?.enterTransition?.invoke()
-                                ?: transitions?.enterTransition?.invoke()
-                                ?: fadeIn()
-                            val exit = initialSpec?.exitTransition?.invoke()
-                                ?: transitions?.exitTransition?.invoke()
-                                ?: fadeOut()
-                            enter togetherWith exit
+                        when {
+                            // Predictive back: user already saw the transition during the gesture.
+                            // Suppress the duplicate AnimatedContent exit animation entirely.
+                            isPop && wasPredictiveBackCommit ->
+                                EnterTransition.None togetherWith ExitTransition.None
+
+                            isPop -> {
+                                val enter = graphBuilder.findSpec(targetState)?.popEnterTransition?.invoke()
+                                    ?: graphBuilder.findSpec(initialState)?.popEnterTransition?.invoke()
+                                    ?: transitions?.popEnterTransition?.invoke()
+                                    ?: fadeIn()
+                                val exit = graphBuilder.findSpec(initialState)?.popExitTransition?.invoke()
+                                    ?: graphBuilder.findSpec(targetState)?.popExitTransition?.invoke()
+                                    ?: transitions?.popExitTransition?.invoke()
+                                    ?: fadeOut()
+                                enter togetherWith exit
+                            }
+
+                            else -> {
+                                val enter = graphBuilder.findSpec(targetState)?.enterTransition?.invoke()
+                                    ?: transitions?.enterTransition?.invoke()
+                                    ?: fadeIn()
+                                val exit = graphBuilder.findSpec(initialState)?.exitTransition?.invoke()
+                                    ?: transitions?.exitTransition?.invoke()
+                                    ?: fadeOut()
+                                enter togetherWith exit
+                            }
                         }
                     },
                     contentKey = { it },
