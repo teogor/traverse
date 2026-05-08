@@ -20,7 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.teogor.traverse.annotations.ScreenRegistry
+import dev.teogor.traverse.demo.TraverseScreens
 import dev.teogor.traverse.demo.ui.ShowcaseScaffold
 
 // ── AnnotationsShowcaseScreen ─────────────────────────────────────────────────
@@ -98,16 +98,17 @@ navigator.navigateToProfile(userId = "42")
         """.trimIndent(),
     ),
     SectionEntry(
-        heading = "7. ScreenRegistry",
-        body = "KSP also generates initTraverseScreenRegistry() which populates the in-memory registry for all annotated destinations.",
+        heading = "7. TraverseScreens — KSP output",
+        body = "KSP generates a static TraverseScreens object with per-destination ScreenInfo vals baked in at compile time. No init call is needed — the JVM initialises it on first access.",
         code = """
-// Call once at startup:
-initTraverseScreenRegistry()
-
-// Query at any time:
-val allScreens = ScreenRegistry.screens
-val deepLinkTargets = ScreenRegistry.all
+// Zero-init — just access it:
+val all: List<ScreenInfo> = TraverseScreens.all
+val screens = TraverseScreens.screens
+val deepLinkTargets = TraverseScreens.all
     .filter { it.deepLinkPatterns.isNotEmpty() }
+
+// Per-destination accessor:
+val info: ScreenInfo = TraverseScreens.catalog
         """.trimIndent(),
     ),
 )
@@ -187,10 +188,10 @@ private fun InfoBanner(text: String) {
 
 @Composable
 private fun ScreenRegistrySummaryCard(onBrowseRegistry: () -> Unit) {
-    val allEntries = ScreenRegistry.all
-    val screenCount = ScreenRegistry.screens.size
-    val dialogCount = ScreenRegistry.dialogs.size
-    val sheetCount = ScreenRegistry.bottomSheets.size
+    val allEntries = TraverseScreens.all
+    val screenCount = TraverseScreens.screens.size
+    val dialogCount = TraverseScreens.dialogs.size
+    val sheetCount = TraverseScreens.bottomSheets.size
     val deepLinkCount = allEntries.count { it.deepLinkPatterns.isNotEmpty() }
 
     Card(
@@ -199,35 +200,28 @@ private fun ScreenRegistrySummaryCard(onBrowseRegistry: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "ScreenRegistry — live data",
+                "TraverseScreens — compile-time catalogue",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Text(
-                text = if (allEntries.isEmpty()) {
-                    "Registry is empty — initTraverseScreenRegistry() was not called yet."
-                } else {
-                    "${allEntries.size} destinations registered:\n" +
-                        "  🖥 $screenCount screens · 💬 $dialogCount dialogs · 📋 $sheetCount sheets · 🔗 $deepLinkCount with deep links"
-                },
+                text = "${allEntries.size} destinations — baked in at KSP time, zero init required:\n" +
+                    "  🖥 $screenCount screens · 💬 $dialogCount dialogs · 📋 $sheetCount sheets · 🔗 $deepLinkCount with deep links",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            if (allEntries.isNotEmpty()) {
-                Text(
-                    text = "Groups: " + allEntries.mapNotNull { it.group.takeIf { g -> g.isNotBlank() } }
-                        .distinct().sorted().joinToString(", "),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Spacer(Modifier.height(4.dp))
-                // Primary CTA: open the live registry browser
-                Button(
-                    onClick = onBrowseRegistry,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Browse Registry →  (${allEntries.size} destinations)")
-                }
+            Text(
+                text = "Groups: " + allEntries.mapNotNull { it.group.takeIf { g -> g.isNotBlank() } }
+                    .distinct().sorted().joinToString(", "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(Modifier.height(4.dp))
+            Button(
+                onClick = onBrowseRegistry,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Browse TraverseScreens →  (${allEntries.size} destinations)")
             }
         }
     }

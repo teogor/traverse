@@ -35,9 +35,9 @@ kotlin {
 }
 
 // ── KSP: run the Traverse annotation processor ───────────────────────────────
-// kspCommonMainMetadata processes all @TraverseScreen / @TraverseDialog / @TraverseBottomSheet
-// annotations and generates RegisterTraverseScreens() as a @Composable in commonMain —
-// available to every target without platform-specific KSP runs.
+// kspCommonMainMetadata: generates TraverseScreens (static object), TraverseAutoGraph, and
+// navigator extensions into commonMain. No platform-specific KSP runs are needed because
+// TraverseScreens is a plain Kotlin object — zero runtime registration, zero init calls.
 dependencies {
     add("kspCommonMainMetadata", project(":traverse-ksp-processor"))
 }
@@ -51,7 +51,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().con
 }
 
 // Add the KSP-generated commonMain sources to the commonMain source set.
-// This makes TraverseAutoGraph.kt, RegisterTraverseScreens(), etc. visible to all targets.
+// This makes TraverseAutoGraph.kt, TraverseScreens.kt, etc. visible to all targets.
 kotlin.sourceSets.getByName("commonMain") {
     kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
 }

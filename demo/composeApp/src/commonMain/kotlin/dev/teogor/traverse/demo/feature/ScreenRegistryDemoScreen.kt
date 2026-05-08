@@ -49,7 +49,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.teogor.traverse.annotations.ScreenInfo
-import dev.teogor.traverse.annotations.ScreenRegistry
+import dev.teogor.traverse.demo.TraverseScreens
 import dev.teogor.traverse.demo.ui.ShowcaseScaffold
 
 // ── Colour helpers ────────────────────────────────────────────────────────────
@@ -92,15 +92,15 @@ private enum class TypeFilter(val label: String) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 /**
- * Live, interactive [ScreenRegistry] browser.
+ * Live, interactive [TraverseScreens] browser.
  *
- * Uses [ScreenRegistry] to display every annotated destination registered by
- * `initTraverseScreenRegistry()` — called once in App.kt.
+ * [TraverseScreens] is a KSP-generated static object — every annotated destination's
+ * metadata is baked in at compile time and requires zero runtime registration.
  *
  * Features:
  * - Stats row: live counts for screens / dialogs / sheets / deep-linked entries
  * - Search bar: fuzzy-filter across name, description, group, and class simple name
- * - Group chips: scroll through all 9 groups (+ "All")
+ * - Group chips: scroll through all groups (+ "All")
  * - Type toggle chips: All / Screen / Dialog / Sheet
  * - Destination cards: name, type badge, description, group, deep links, root indicator
  */
@@ -109,7 +109,7 @@ private enum class TypeFilter(val label: String) {
 fun ScreenRegistryDemoScreen(
     onNavigateUp: () -> Unit,
 ) {
-    val allEntries = remember { ScreenRegistry.all }
+    val allEntries = remember { TraverseScreens.all }
     val allGroups  = remember { listOf("All") + allEntries.mapNotNull { it.group.takeIf { g -> g.isNotBlank() } }.distinct().sorted() }
 
     var searchQuery   by remember { mutableStateOf("") }

@@ -48,9 +48,6 @@ fun App(
     pendingDeepLink: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
 ) {
-    // Populate ScreenRegistry once for this composition tree.
-    RegisterTraverseScreens()
-
     MaterialTheme {
         // External navigator — lets us handle deep links via LaunchedEffect
         // before the navigator is injected into TraverseHost.
