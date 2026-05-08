@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Demo - Android" type="AndroidRunConfigurationType" factoryName="Android App">
+    <module name="Traverse.demo.composeApp.main" />
+    <option name="DEPLOY" value="1" />
+    <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+    <option name="DEPLOY_AS_INSTANT" value="false" />
+    <option name="ARTIFACT_NAME" value="" />
+    <option name="PM_INSTALL_OPTIONS" value="" />
+    <option name="ALL_USERS" value="false" />
+    <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+    <option name="RESTORE_BACKUP_FILE" value="" />
+    <option name="NATIVE_DEBUG_IN_MIXED_MODE" value="false" />
+    <option name="LAUNCH" value="default_activity" />
+    <option name="LAUNCH_ACTIVITY" value="" />
+    <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+    <option name="DEBUGGER_TYPE" value="Java" />
+    <Profiling />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
+
